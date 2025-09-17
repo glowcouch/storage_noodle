@@ -1,0 +1,12 @@
+[package]
+name = "storage_noodle_sql"
+rust-version = { workspace = true }
+edition = { workspace = true }
+
+[lints]
+workspace = true
+
+[dependencies]
+sqlx = { workspace = true }
+storage_noodle_sql_derive = { path = "../sql_derive" }
+storage_noodle_traits = { path = "../traits" }

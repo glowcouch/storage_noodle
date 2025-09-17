@@ -1,0 +1,4 @@
+[toolchain]
+channel = "stable-2025-08-07"
+profile = "default"
+components = ["rust-analyzer", "rust-src"]

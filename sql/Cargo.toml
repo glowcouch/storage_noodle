@@ -10,3 +10,7 @@ workspace = true
 sqlx = { workspace = true }
 storage_noodle_sql_derive = { path = "../sql_derive" }
 storage_noodle_traits = { path = "../traits" }
+
+[dev-dependencies]
+sqlx = { workspace = true, features = ["runtime-tokio", "sqlite"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

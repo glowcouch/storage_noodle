@@ -25,36 +25,8 @@ fn create_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) 
     // The table name.
     let table = ident.to_string();
 
-    // List of field idents.
-    let fields = fields.iter().enumerate().map(|(index, field)| {
-        // Fall back to the index if the field has no name (unit structs).
-        if let Some(ident) = &field.ident {
-            ident.to_owned()
-        } else {
-            syn::Ident::new(&index.to_string(), proc_macro2::Span::mixed_site())
-        }
-    });
-
-    // List of column names.
-    let columns = fields
-        .clone()
-        .map(|ident| ident.to_string())
-        .collect::<Vec<_>>();
-
-    // List of "?" to be filled in at runtime.
-    let values = (0..columns.len())
-        .map(|_| "?")
-        .collect::<Vec<_>>()
-        .join(", ");
-
-    // List of `.bind()` calls to run on the query.
-    let bind_calls: TokenStream = fields
-        .map(|ident| {
-            quote! {
-                .bind(&self.#ident)
-            }
-        })
-        .collect();
+    // List of columns.
+    let columns = crate::sql::Column::from_fields(fields.clone());
 
     // The SQL query to run.
     let query = {
@@ -65,13 +37,29 @@ fn create_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) 
                 RETURNING {};
             ",
             table,
-            columns.join(", "),
-            values,
+            columns
+                .iter()
+                .map(|c| c.name.clone())
+                .collect::<Vec<_>>()
+                .join(", "), // List of column names (in order).
+            (0..columns.len())
+                .map(|_| "?")
+                .collect::<Vec<_>>()
+                .join(", "), // List of "?" - to be filled in with bind calls.
             crate::sql::ID_FIELD_NAME,
         );
         syn::LitStr::new(&query, proc_macro2::Span::mixed_site())
     };
 
+    // List of `.bind()` calls to run on the query.
+    let bind_calls: TokenStream = fields
+        .iter()
+        .map(|ident| {
+            quote! {.bind(&self.#ident)}
+        })
+        .collect();
+
+    // Implement the trait.
     quote! {
         impl ::storage_noodle_sql::macro_helpers::Create<::storage_noodle_sql::SqlBacking<#backing_db, #raw_id>> for #ident
         {

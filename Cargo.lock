@@ -1162,6 +1162,8 @@ name = "storage_noodle_sql_derive"
 version = "0.0.0"
 dependencies = [
  "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

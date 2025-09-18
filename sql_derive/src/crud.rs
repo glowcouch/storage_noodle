@@ -3,6 +3,23 @@ use quote::quote;
 
 /// Implementation of [`crate::Create`].
 pub fn create(item: syn::ItemStruct) -> TokenStream {
+    // Get the sql attribute(s). Error if there are none.
+    let sql_attrs = match crate::attr::SqlAttr::from_item(item.clone()) {
+        Ok(value) => value,
+        Err(value) => return value,
+    };
+
+    // Run `create_impl` on the attributes and return the resulting impl block(s).
+    sql_attrs
+        .iter()
+        .map(|crate::attr::SqlAttr { backing_db, raw_id }| {
+            create_impl(item.clone(), backing_db.clone(), raw_id.clone())
+        })
+        .collect()
+}
+
+/// Single-attribute implementation for [`create`].
+fn create_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) -> TokenStream {
     let syn::ItemStruct { ident, fields, .. } = item;
 
     // The table name.
@@ -34,11 +51,12 @@ pub fn create(item: syn::ItemStruct) -> TokenStream {
     let bind_calls: TokenStream = fields
         .map(|ident| {
             quote! {
-                .bind(self.#ident)
+                .bind(&self.#ident)
             }
         })
         .collect();
 
+    // The SQL query to run.
     let query = {
         let query = format!(
             "
@@ -55,17 +73,24 @@ pub fn create(item: syn::ItemStruct) -> TokenStream {
     };
 
     quote! {
-        impl<DB: ::sqlx::Dtabase, RawId> ::storage_noodle_traits::Create<::storage_noodle_sql::SqlBacking<RawId>> for #ident {
-            type Error = DB::QueryResult;
+        impl ::storage_noodle_sql::macro_helpers::Create<::storage_noodle_sql::SqlBacking<#backing_db, #raw_id>> for #ident
+        {
+            type Error = ::sqlx::Error;
 
-            fn create(
-                &self,
-                storage: impl ::core::marker::Deref<Target = ::storage_noodle_sql::SqlBacking<RawId>>,
-                id: impl ::core::marker::Deref<Target = AssocId<Self, RawId>>,
-            ) -> impl Future<Output = Result<(), Self::Error>> + Send {
-                async {
-                    let query = ::sqlx::query(#query)#bind_calls;
-                    query.execute(&storage.pool).await?
+            fn create<'a>(
+                &'a self,
+                storage: impl ::core::ops::Deref<Target = ::storage_noodle_sql::SqlBacking<#backing_db, #raw_id>>
+                + core::marker::Send
+                + 'a,
+            ) -> impl Future<Output = Result<::storage_noodle_sql::macro_helpers::AssocId<Self, #raw_id>, Self::Error>> + Send {
+                async move {
+                    // Run the query, getting back a single value (the new row's id).
+                    let query = ::sqlx::query_scalar(#query)#bind_calls;
+
+                    // Get the raw id back from the query.
+                    let raw = query.fetch_one(&storage.pool).await?;
+
+                    Ok(::storage_noodle_sql::macro_helpers::AssocId::new(raw))
                 }
             }
         }

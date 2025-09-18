@@ -9,6 +9,15 @@ pub struct AssocId<T: ?Sized, RawId> {
     phantom: PhantomData<T>,
 }
 
+impl<T: ?Sized, RawId> AssocId<T, RawId> {
+    pub fn new(raw: RawId) -> Self {
+        Self {
+            inner: raw,
+            phantom: PhantomData,
+        }
+    }
+}
+
 impl<T: ?Sized, RawId> Deref for AssocId<T, RawId> {
     type Target = RawId;
 
@@ -20,11 +29,10 @@ impl<T: ?Sized, RawId> Deref for AssocId<T, RawId> {
 pub trait Create<S: BackingStorage> {
     type Error;
 
-    fn create(
-        &self,
-        storage: impl Deref<Target = S>,
-        id: impl Deref<Target = AssocId<Self, S::RawId>>,
-    ) -> impl Future<Output = Result<(), Self::Error>> + Send;
+    fn create<'a>(
+        &'a self,
+        storage: impl Deref<Target = S> + core::marker::Sync + 'a + core::marker::Send,
+    ) -> impl Future<Output = Result<AssocId<Self, S::RawId>, Self::Error>> + Send;
 }
 
 pub trait Read<S: BackingStorage>: Sized {

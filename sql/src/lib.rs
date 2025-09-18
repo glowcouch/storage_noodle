@@ -21,3 +21,8 @@ impl<DB: sqlx::Database, RawId> SqlBacking<DB, RawId> {
 impl<DB: sqlx::Database, RawId> BackingStorage for SqlBacking<DB, RawId> {
     type RawId = RawId;
 }
+
+#[doc(hidden)]
+pub mod macro_helpers {
+    pub use storage_noodle_traits::*;
+}

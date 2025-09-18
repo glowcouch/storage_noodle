@@ -1,5 +1,5 @@
 [workspace]
-members = ["traits", "sql", "sql_derive"]
+members = ["traits", "sql", "sql_derive", "example"]
 resolver = "3"
 
 [workspace.package]

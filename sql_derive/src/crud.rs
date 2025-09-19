@@ -75,10 +75,11 @@ fn create_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) 
     };
 
     // List of `.bind()` calls to run on the query.
-    let bind_calls: TokenStream = fields
+    let bind_calls: TokenStream = columns
         .iter()
-        .map(|ident| {
-            quote! {.bind(&self.#ident)}
+        .map(|column| {
+            let field = &column.ident;
+            quote! {.bind(&self.#field)}
         })
         .collect();
 

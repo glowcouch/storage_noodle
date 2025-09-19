@@ -1,8 +1,11 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-/// Implementation of [`crate::Create`].
-pub fn create(item: syn::ItemStruct) -> TokenStream {
+/// Runs `func` on each attribute and returns a list of impl blocks.
+fn for_each_attr(
+    item: syn::ItemStruct,
+    func: impl Fn(syn::ItemStruct, syn::Type, syn::Type) -> TokenStream,
+) -> TokenStream {
     // Get the sql attribute(s). Error if there are none.
     let sql_attrs = match crate::attr::SqlAttr::from_item(item.clone()) {
         Ok(value) => value,
@@ -13,12 +16,32 @@ pub fn create(item: syn::ItemStruct) -> TokenStream {
     sql_attrs
         .iter()
         .map(|crate::attr::SqlAttr { backing_db, raw_id }| {
-            create_impl(item.clone(), backing_db.clone(), raw_id.clone())
+            func(item.clone(), backing_db.clone(), raw_id.clone())
         })
         .collect()
 }
 
-/// Single-attribute implementation for [`create`].
+/// Implementation of [`crate::Create`].
+pub fn create(item: syn::ItemStruct) -> TokenStream {
+    for_each_attr(item, create_impl)
+}
+
+/// Implementation of [`crate::Read`].
+pub fn read(item: syn::ItemStruct) -> TokenStream {
+    for_each_attr(item, read_impl)
+}
+
+/// Implementation of [`crate::Update`].
+pub fn update(item: syn::ItemStruct) -> TokenStream {
+    todo!()
+}
+
+/// Implementation of [`crate::Delete`].
+pub fn delete(item: syn::ItemStruct) -> TokenStream {
+    todo!()
+}
+
+/// Per-attribute implementation for [`create`].
 fn create_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) -> TokenStream {
     let syn::ItemStruct { ident, fields, .. } = item;
 
@@ -85,17 +108,44 @@ fn create_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) 
     }
 }
 
-/// Implementation of [`crate::Read`].
-pub fn read(item: syn::ItemStruct) -> TokenStream {
-    todo!()
-}
+/// Per-attribute implementation for [`read`].
+fn read_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) -> TokenStream {
+    let syn::ItemStruct { ident, fields, .. } = item;
 
-/// Implementation of [`crate::Update`].
-pub fn update(item: syn::ItemStruct) -> TokenStream {
-    todo!()
-}
+    // The table name.
+    let table = ident.to_string();
 
-/// Implementation of [`crate::Delete`].
-pub fn delete(item: syn::ItemStruct) -> TokenStream {
-    todo!()
+    // The SQL query to run.
+    let query = {
+        let query = format!(
+            "
+                SELECT * FROM {}
+                WHERE {}=?;
+            ",
+            table,
+            crate::sql::ID_FIELD_NAME,
+        );
+        syn::LitStr::new(&query, proc_macro2::Span::mixed_site())
+    };
+
+    // Implement the trait.
+    quote! {
+        impl ::storage_noodle_sql::macro_helpers::Read<::storage_noodle_sql::SqlBacking<#backing_db, #raw_id>> for #ident
+        {
+            type Error = ::sqlx::Error;
+
+            fn read(
+                storage: impl ::core::ops::Deref<Target = ::storage_noodle_sql::SqlBacking<#backing_db, #raw_id>>
+                + core::marker::Send,
+                id: impl ::core::ops::Deref<Target = ::storage_noodle_sql::macro_helpers::AssocId<Self, #raw_id>> + core::marker::Send
+            ) -> impl Future<Output = Result<Self, Self::Error>> + Send {
+                async move {
+                    let query = ::sqlx::query_as(#query).bind(id.as_raw());
+
+                    // Get the raw id back from the query.
+                    query.fetch_one(&storage.pool).await
+                }
+            }
+        }
+    }
 }

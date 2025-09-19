@@ -20,7 +20,7 @@ async fn main() {
     .await
     .unwrap();
 
-    let backing: storage_noodle_sql::SqlBacking<_, u64> =
+    let backing: storage_noodle_sql::SqlBacking<_, u32> =
         storage_noodle_sql::SqlBacking::new(db_pool);
 
     // Create a new record.
@@ -32,8 +32,8 @@ async fn main() {
     .unwrap();
 }
 
-#[derive(storage_noodle_sql::Create)]
-#[config_noodle_sql(sqlx::sqlite::Sqlite, u64)]
+#[derive(storage_noodle_sql::Create, storage_noodle_sql::Read, sqlx::FromRow)]
+#[config_noodle_sql(sqlx::sqlite::Sqlite, u32)]
 struct Cookie {
     flavour: String,
 }

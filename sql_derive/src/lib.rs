@@ -14,7 +14,7 @@ pub fn create(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 }
 
 // Derives `Read` for a type
-#[proc_macro_derive(Read)]
+#[proc_macro_derive(Read, attributes(config_noodle_sql))]
 pub fn read(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     crud::read(syn::parse_macro_input!(input)).into()
 }

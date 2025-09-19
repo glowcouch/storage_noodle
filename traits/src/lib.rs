@@ -16,12 +16,8 @@ impl<T: ?Sized, RawId> AssocId<T, RawId> {
             phantom: PhantomData,
         }
     }
-}
 
-impl<T: ?Sized, RawId> Deref for AssocId<T, RawId> {
-    type Target = RawId;
-
-    fn deref(&self) -> &Self::Target {
+    pub fn as_raw(&self) -> &RawId {
         &self.inner
     }
 }
@@ -39,8 +35,8 @@ pub trait Read<S: BackingStorage>: Sized {
     type Error;
 
     fn read(
-        storage: impl Deref<Target = S>,
-        id: impl Deref<Target = AssocId<Self, S::RawId>>,
+        storage: impl Deref<Target = S> + core::marker::Sync + core::marker::Send,
+        id: impl Deref<Target = AssocId<Self, S::RawId>> + core::marker::Send,
     ) -> impl Future<Output = Result<Self, Self::Error>> + Send;
 }
 

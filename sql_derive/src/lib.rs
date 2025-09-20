@@ -20,13 +20,13 @@ pub fn read(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 }
 
 // Derives `Update` for a type
-#[proc_macro_derive(Update)]
+#[proc_macro_derive(Update, attributes(config_noodle_sql))]
 pub fn update(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     crud::update(syn::parse_macro_input!(input)).into()
 }
 
 // Derives `Delete` for a type
-#[proc_macro_derive(Delete)]
+#[proc_macro_derive(Delete, attributes(config_noodle_sql))]
 pub fn delete(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     crud::delete(syn::parse_macro_input!(input)).into()
 }

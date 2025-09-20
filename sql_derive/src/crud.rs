@@ -33,7 +33,7 @@ pub fn read(item: syn::ItemStruct) -> TokenStream {
 
 /// Implementation of [`crate::Update`].
 pub fn update(item: syn::ItemStruct) -> TokenStream {
-    todo!()
+    for_each_attr(item, update_impl)
 }
 
 /// Implementation of [`crate::Delete`].
@@ -96,7 +96,7 @@ fn create_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) 
                 + 'a,
             ) -> impl Future<Output = Result<::storage_noodle_sql::macro_helpers::AssocId<Self, #raw_id>, Self::Error>> + Send {
                 async move {
-                    // Run the query, getting back a single value (the new row's id).
+                    // Build the query.
                     let query = ::sqlx::query_scalar(#query)#bind_calls;
 
                     // Get the raw id back from the query.
@@ -153,6 +153,7 @@ fn read_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) ->
                 id: impl ::core::ops::Deref<Target = ::storage_noodle_sql::macro_helpers::AssocId<Self, #raw_id>> + core::marker::Send
             ) -> impl Future<Output = Result<Option<Self>, Self::Error>> + Send {
                 async move {
+                    // Build the query.
                     let query = ::sqlx::query_as(#query).bind(id.as_raw());
 
                     // Get the row back from the query.
@@ -168,6 +169,83 @@ fn read_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) ->
                         Err(::sqlx::Error::RowNotFound) => Ok(None),
 
                         //= traits/spec.md#read-trait
+                        //# * In the case of a failure, the future MUST return `Err()`.
+                        Err(e) => Err(e),
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Per-attribute implementation for [`update`].
+fn update_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) -> TokenStream {
+    let syn::ItemStruct { ident, fields, .. } = item;
+
+    // The table name.
+    let table = ident.to_string();
+
+    // List of columns.
+    let columns = crate::sql::Column::from_fields(fields.clone());
+
+    // The SQL query to run.
+    let query = {
+        let query = format!(
+            "
+                UPDATE {}
+                SET {}
+                WHERE {}=?;
+            ",
+            table,
+            columns
+                .iter()
+                .map(|column| { format!("{}=?", column.name) })
+                .collect::<Vec<_>>()
+                .join(", "),
+            crate::sql::ID_FIELD_NAME,
+        );
+        syn::LitStr::new(&query, proc_macro2::Span::mixed_site())
+    };
+
+    // List of `.bind()` calls to run on the query.
+    let bind_calls: TokenStream = columns
+        .iter()
+        .map(|column| {
+            let field = &column.ident;
+            quote! {.bind(&self.#field)}
+        })
+        .collect();
+
+    // Implement the trait.
+    quote! {
+        impl ::storage_noodle_sql::macro_helpers::Update<::storage_noodle_sql::SqlBacking<#backing_db, #raw_id>> for #ident
+        {
+            type Error = ::sqlx::Error;
+
+            fn update<'a>(
+                &'a self,
+                storage: impl ::core::ops::Deref<Target = ::storage_noodle_sql::SqlBacking<#backing_db, #raw_id>>
+                + core::marker::Send
+                + 'a,
+                id: impl ::core::ops::Deref<Target = ::storage_noodle_sql::macro_helpers::AssocId<Self, #raw_id>> + core::marker::Send
+            ) -> impl Future<Output = Result<Option<()>, Self::Error>> + Send {
+                async move {
+                    // Build the query.
+                    let query = ::sqlx::query(#query)#bind_calls.bind(id.as_raw());
+
+                    // Execute the query.
+                    let result = query.execute(&storage.pool).await;
+
+                    match result {
+                        //= traits/spec.md#update-trait
+                        //# * In the case of a full success, the future MUST return `Ok(Some(()))`.
+                        Ok(_) => Ok(Some(())),
+
+                        //= traits/spec.md#update-trait
+                        //# * In the case of a partial success, where the operation succeeded, but the item doesn't exist, the future MUST return `Ok(None)`.
+                        Err(::sqlx::Error::RowNotFound) => Ok(None),
+
+                        //= traits/spec.md#update-trait
                         //# * In the case of a failure, the future MUST return `Err()`.
                         Err(e) => Err(e),
                     }

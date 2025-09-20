@@ -62,10 +62,10 @@ pub trait Update<S: BackingStorage> {
     type Error;
 
     /// Updates an item in the storage backend. Will return [`None`] if the item doesn't exist.
-    fn update(
-        &self,
-        storage: impl Deref<Target = S>,
-        id: impl Deref<Target = AssocId<Self, S::RawId>>,
+    fn update<'a>(
+        &'a self,
+        storage: impl Deref<Target = S> + core::marker::Sync + 'a + core::marker::Send,
+        id: impl Deref<Target = AssocId<Self, S::RawId>> + core::marker::Send,
     ) -> impl Future<Output = Result<Option<()>, Self::Error>> + Send;
 }
 

@@ -1,0 +1,31 @@
+name: tests
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  nextest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: install nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+
+      - name: run tests
+        run: |
+          cargo nextest run --profile ci
+
+      - name: archive tests report
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-report
+          path: junit.xml

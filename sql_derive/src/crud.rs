@@ -116,13 +116,21 @@ fn read_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) ->
     // The table name.
     let table = ident.to_string();
 
+    // List of columns.
+    let columns = crate::sql::Column::from_fields(fields.clone());
+
     // The SQL query to run.
     let query = {
         let query = format!(
             "
-                SELECT * FROM {}
+                SELECT {} FROM {}
                 WHERE {}=?;
             ",
+            columns
+                .iter()
+                .map(|c| c.name.clone())
+                .collect::<Vec<_>>()
+                .join(", "), // List of column names (in order).
             table,
             crate::sql::ID_FIELD_NAME,
         );

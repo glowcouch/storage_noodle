@@ -40,7 +40,7 @@ pub trait Create<S: BackingStorage> {
     /// Creates a new item in the storage backend. Returns the Id of the new item.
     fn create<'a>(
         &'a self,
-        storage: impl Deref<Target = S> + core::marker::Sync + 'a + core::marker::Send,
+        storage: impl Deref<Target = S> + 'a + Send,
     ) -> impl Future<Output = Result<AssocId<Self, S::RawId>, Self::Error>> + Send;
 }
 
@@ -51,8 +51,8 @@ pub trait Read<S: BackingStorage>: Sized {
 
     /// Reads an item from the storage backend. Returns the item.
     fn read(
-        storage: impl Deref<Target = S> + core::marker::Sync + core::marker::Send,
-        id: impl Deref<Target = AssocId<Self, S::RawId>> + core::marker::Send,
+        storage: impl Deref<Target = S> + Send,
+        id: impl Deref<Target = AssocId<Self, S::RawId>> + Send,
     ) -> impl Future<Output = Result<Option<Self>, Self::Error>> + Send;
 }
 
@@ -64,8 +64,8 @@ pub trait Update<S: BackingStorage> {
     /// Updates an item in the storage backend. Will return [`None`] if the item doesn't exist.
     fn update<'a>(
         &'a self,
-        storage: impl Deref<Target = S> + core::marker::Sync + 'a + core::marker::Send,
-        id: impl Deref<Target = AssocId<Self, S::RawId>> + core::marker::Send,
+        storage: impl Deref<Target = S> + 'a + Send,
+        id: impl Deref<Target = AssocId<Self, S::RawId>> + Send,
     ) -> impl Future<Output = Result<Option<()>, Self::Error>> + Send;
 }
 
@@ -77,7 +77,7 @@ pub trait Delete<S: BackingStorage>: Sized {
     /// Deletes an item from the storage backend. Will return the item that was deleted if it
     /// exists, and [`None`] if it doesn't exist.
     fn delete(
-        storage: impl Deref<Target = S> + core::marker::Sync + core::marker::Send,
-        id: impl Deref<Target = AssocId<Self, S::RawId>> + core::marker::Send,
+        storage: impl Deref<Target = S> + Send,
+        id: impl Deref<Target = AssocId<Self, S::RawId>> + Send,
     ) -> impl Future<Output = Result<Option<Self>, Self::Error>> + Send;
 }

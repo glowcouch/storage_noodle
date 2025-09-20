@@ -1,0 +1,32 @@
+name: traceability
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  duvet:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: install duvet
+        uses: taiki-e/install-action@v2
+        with:
+          tool: duvet
+
+      - name: run duvet
+        run: |
+          duvet report --ci
+
+      - name: archive traceability report
+        uses: actions/upload-artifact@v4
+        with:
+          name: traceability-report
+          path: .duvet/reports/report.html
+

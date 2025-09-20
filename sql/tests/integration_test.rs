@@ -29,16 +29,13 @@ async fn main() {
     };
 
     // Create a new record.
-    let cookie_id = cookie
-    .create(&backing)
-    .await
-    .unwrap();
+    let cookie_id = cookie.create(&backing).await.unwrap();
 
     // Read the record back from the db.
     let returned_cookie = Cookie::read(&backing, &cookie_id).await.unwrap();
 
     // Check that the cookie did not get altered.
-    assert_eq!(returned_cookie, cookie);
+    assert_eq!(returned_cookie, Some(cookie));
 }
 
 #[derive(Debug, PartialEq, storage_noodle_sql::Create, storage_noodle_sql::Read, sqlx::FromRow)]

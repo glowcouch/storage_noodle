@@ -100,8 +100,12 @@ fn create_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) 
                     let query = ::sqlx::query_scalar(#query)#bind_calls;
 
                     // Get the raw id back from the query.
+                    //= traits/spec.md#create-trait
+                    //# * In the case of a failure, the future MUST return `Err()`.
                     let raw = query.fetch_one(&storage.pool).await?;
 
+                    //= traits/spec.md#create-trait
+                    //# * In the case of a success, the future MUST return `Ok(AssocId<Self, RawId>)` - where the `AssocId` holds the Id of the newly created item.
                     Ok(::storage_noodle_sql::macro_helpers::AssocId::new(raw))
                 }
             }
@@ -147,12 +151,26 @@ fn read_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) ->
                 storage: impl ::core::ops::Deref<Target = ::storage_noodle_sql::SqlBacking<#backing_db, #raw_id>>
                 + core::marker::Send,
                 id: impl ::core::ops::Deref<Target = ::storage_noodle_sql::macro_helpers::AssocId<Self, #raw_id>> + core::marker::Send
-            ) -> impl Future<Output = Result<Self, Self::Error>> + Send {
+            ) -> impl Future<Output = Result<Option<Self>, Self::Error>> + Send {
                 async move {
                     let query = ::sqlx::query_as(#query).bind(id.as_raw());
 
-                    // Get the raw id back from the query.
-                    query.fetch_one(&storage.pool).await
+                    // Get the row back from the query.
+                    let result = query.fetch_one(&storage.pool).await;
+
+                    match result {
+                        //= traits/spec.md#read-trait
+                        //# * In the case of a full success, the future MUST return `Ok(Some(Self))` - where `Self` is the result of the read.
+                        Ok(row) => Ok(Some(row)),
+
+                        //= traits/spec.md#read-trait
+                        //# * In the case of a partial success, where the operation succeeded, but the item doesn't exist, the future MUST return `Ok(None)`.
+                        Err(::sqlx::Error::RowNotFound) => Ok(None),
+
+                        //= traits/spec.md#read-trait
+                        //# * In the case of a failure, the future MUST return `Err()`.
+                        Err(e) => Err(e),
+                    }
                 }
             }
         }

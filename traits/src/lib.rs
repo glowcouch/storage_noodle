@@ -77,7 +77,7 @@ pub trait Delete<S: BackingStorage>: Sized {
     /// Deletes an item from the storage backend. Will return the item that was deleted if it
     /// exists, and [`None`] if it doesn't exist.
     fn delete(
-        storage: impl Deref<Target = S>,
-        id: impl Deref<Target = AssocId<Self, S::RawId>>,
+        storage: impl Deref<Target = S> + core::marker::Sync + core::marker::Send,
+        id: impl Deref<Target = AssocId<Self, S::RawId>> + core::marker::Send,
     ) -> impl Future<Output = Result<Option<Self>, Self::Error>> + Send;
 }

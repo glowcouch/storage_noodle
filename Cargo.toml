@@ -8,8 +8,16 @@ rust-version = "1.89.0"
 edition = "2024"
 
 [workspace.dependencies]
+# sql
 sqlx = { version = "0.8.6" }
+
+# macro
 proc-macro2 = "1.0.101"
+syn = "2.0.106"
+quote = "1.0.40"
+
+# test deps
+tokio = { version = "1.47.1" }
 
 [workspace.lints.clippy]
 std_instead_of_core = "forbid"

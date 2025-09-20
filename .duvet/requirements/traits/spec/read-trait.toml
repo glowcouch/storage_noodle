@@ -1,0 +1,28 @@
+target = "traits/spec.md#read-trait"
+
+# Read Trait
+#
+# The Read trait is used to read an item from the backing storage. The `Read::read` async function has these return values:
+# 
+# * In the case of a failure, the future MUST return `Err()`.
+# * In the case of a partial success, where the operation succeeded, but the item doesn't exist, the future MUST return `Ok(None)`.
+# * In the case of a full success, the future MUST return `Ok(Some(Self))` - where `Self` is the result of the read.
+
+[[spec]]
+level = "MUST"
+quote = '''
+* In the case of a failure, the future MUST return `Err()`.
+'''
+
+[[spec]]
+level = "MUST"
+quote = '''
+* In the case of a partial success, where the operation succeeded, but the item doesn't exist, the future MUST return `Ok(None)`.
+'''
+
+[[spec]]
+level = "MUST"
+quote = '''
+* In the case of a full success, the future MUST return `Ok(Some(Self))` - where `Self` is the result of the read.
+'''
+

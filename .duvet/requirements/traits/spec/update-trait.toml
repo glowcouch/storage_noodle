@@ -1,0 +1,28 @@
+target = "traits/spec.md#update-trait"
+
+# Update Trait
+#
+# The Update trait is used to update an item in the backing storage. The `Update::update` async function has these return values:
+# 
+# * In the case of a failure, the future MUST return `Err()`.
+# * In the case of a partial success, where the operation succeeded, but the item doesn't exist, the future MUST return `Ok(None)`.
+# * In the case of a full success, the future MUST return `Ok(Some(()))`.
+
+[[spec]]
+level = "MUST"
+quote = '''
+* In the case of a failure, the future MUST return `Err()`.
+'''
+
+[[spec]]
+level = "MUST"
+quote = '''
+* In the case of a partial success, where the operation succeeded, but the item doesn't exist, the future MUST return `Ok(None)`.
+'''
+
+[[spec]]
+level = "MUST"
+quote = '''
+* In the case of a full success, the future MUST return `Ok(Some(()))`.
+'''
+

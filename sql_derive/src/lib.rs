@@ -1,7 +1,32 @@
-mod sql_backing;
+//! Derives `storage_noodle` traits for an SQL backend.
+//!
+//! # Compile-time verification
+//!
+//! Currently we do not perform any compile-time verification of the generated SQL.
+mod attr;
+mod crud;
+mod sql;
 
-/// Derives `Create` `Read` `Update` `Delete<SqlBacking>`
-#[proc_macro_derive(SqlBacking)]
-pub fn sql_backing(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    sql_backing::sql_backing(input.into()).into()
+/// Derives `Create` for a type
+#[proc_macro_derive(Create, attributes(config_noodle_sql))]
+pub fn create(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    crud::create(syn::parse_macro_input!(input)).into()
+}
+
+// Derives `Read` for a type
+#[proc_macro_derive(Read, attributes(config_noodle_sql))]
+pub fn read(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    crud::read(syn::parse_macro_input!(input)).into()
+}
+
+// Derives `Update` for a type
+#[proc_macro_derive(Update, attributes(config_noodle_sql))]
+pub fn update(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    crud::update(syn::parse_macro_input!(input)).into()
+}
+
+// Derives `Delete` for a type
+#[proc_macro_derive(Delete, attributes(config_noodle_sql))]
+pub fn delete(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    crud::delete(syn::parse_macro_input!(input)).into()
 }

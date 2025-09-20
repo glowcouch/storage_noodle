@@ -3,20 +3,26 @@ use core::marker::PhantomData;
 pub use storage_noodle_sql_derive::*;
 use storage_noodle_traits::BackingStorage;
 
-/// Defines an SQL table for a type.
-pub trait SqlTable {
-    /// Should return a `CREATE TABLE` statement for the type.
-    fn table_definition<'a, DB: sqlx::Database>() -> impl sqlx::Execute<'a, DB>;
+#[derive(Debug, Clone)]
+pub struct SqlBacking<DB: sqlx::Database, RawId> {
+    pub pool: sqlx::Pool<DB>,
+    phantom: PhantomData<RawId>,
 }
 
-pub trait SqlFlavor {
-    type Key;
+impl<DB: sqlx::Database, RawId> SqlBacking<DB, RawId> {
+    pub fn new(pool: sqlx::Pool<DB>) -> Self {
+        Self {
+            pool,
+            phantom: PhantomData,
+        }
+    }
 }
 
-pub struct SqlBacking<F: SqlFlavor> {
-    phantom: PhantomData<F>,
+impl<DB: sqlx::Database, RawId> BackingStorage for SqlBacking<DB, RawId> {
+    type RawId = RawId;
 }
 
-impl<F: SqlFlavor> BackingStorage for SqlBacking<F> {
-    type RawId = F::Key;
+#[doc(hidden)]
+pub mod macro_helpers {
+    pub use storage_noodle_traits::*;
 }

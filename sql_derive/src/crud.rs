@@ -43,7 +43,15 @@ pub fn delete(item: syn::ItemStruct) -> TokenStream {
 
 /// Per-attribute implementation for [`create`].
 fn create_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) -> TokenStream {
-    let syn::ItemStruct { ident, fields, .. } = item;
+    let syn::ItemStruct {
+        ident,
+        fields,
+        generics,
+        ..
+    } = item;
+
+    // Split generics.
+    let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
 
     // The table name.
     let table = ident.to_string();
@@ -85,7 +93,7 @@ fn create_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) 
 
     // Implement the trait.
     quote! {
-        impl ::storage_noodle_sql::macro_helpers::Create<::storage_noodle_sql::SqlBacking<#backing_db, #raw_id>> for #ident
+        impl #impl_generics ::storage_noodle_sql::macro_helpers::Create<::storage_noodle_sql::SqlBacking<#backing_db, #raw_id>> for #ident #type_generics #where_clause
         {
             type Error = ::sqlx::Error;
 
@@ -115,7 +123,15 @@ fn create_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) 
 
 /// Per-attribute implementation for [`read`].
 fn read_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) -> TokenStream {
-    let syn::ItemStruct { ident, fields, .. } = item;
+    let syn::ItemStruct {
+        ident,
+        fields,
+        generics,
+        ..
+    } = item;
+
+    // Split generics.
+    let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
 
     // The table name.
     let table = ident.to_string();
@@ -143,7 +159,7 @@ fn read_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) ->
 
     // Implement the trait.
     quote! {
-        impl ::storage_noodle_sql::macro_helpers::Read<::storage_noodle_sql::SqlBacking<#backing_db, #raw_id>> for #ident
+        impl #impl_generics ::storage_noodle_sql::macro_helpers::Read<::storage_noodle_sql::SqlBacking<#backing_db, #raw_id>> for #ident #type_generics #where_clause
         {
             type Error = ::sqlx::Error;
 
@@ -180,7 +196,15 @@ fn read_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) ->
 
 /// Per-attribute implementation for [`update`].
 fn update_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) -> TokenStream {
-    let syn::ItemStruct { ident, fields, .. } = item;
+    let syn::ItemStruct {
+        ident,
+        fields,
+        generics,
+        ..
+    } = item;
+
+    // Split generics.
+    let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
 
     // The table name.
     let table = ident.to_string();
@@ -218,7 +242,7 @@ fn update_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) 
 
     // Implement the trait.
     quote! {
-        impl ::storage_noodle_sql::macro_helpers::Update<::storage_noodle_sql::SqlBacking<#backing_db, #raw_id>> for #ident
+        impl #impl_generics ::storage_noodle_sql::macro_helpers::Update<::storage_noodle_sql::SqlBacking<#backing_db, #raw_id>> for #ident #type_generics #where_clause
         {
             type Error = ::sqlx::Error;
 
@@ -257,7 +281,15 @@ fn update_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) 
 
 /// Per-attribute implementation for [`delete`].
 fn delete_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) -> TokenStream {
-    let syn::ItemStruct { ident, fields, .. } = item;
+    let syn::ItemStruct {
+        ident,
+        fields,
+        generics,
+        ..
+    } = item;
+
+    // Split generics.
+    let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
 
     // The table name.
     let table = ident.to_string();
@@ -286,7 +318,7 @@ fn delete_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) 
 
     // Implement the trait.
     quote! {
-        impl ::storage_noodle_sql::macro_helpers::Delete<::storage_noodle_sql::SqlBacking<#backing_db, #raw_id>> for #ident
+        impl #impl_generics ::storage_noodle_sql::macro_helpers::Delete<::storage_noodle_sql::SqlBacking<#backing_db, #raw_id>> for #ident #type_generics #where_clause
         {
             type Error = ::sqlx::Error;
 

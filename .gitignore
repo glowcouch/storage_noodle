@@ -3,3 +3,6 @@
 
 # cargo
 /target
+
+# duvet
+/.duvet/reports

@@ -1,12 +1,13 @@
+use crate::attr::for_each_attr;
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use crate::attr::for_each_attr;
-
+/// Implementation of [`crate::SqlTable`].
 pub fn sql_table(item: syn::ItemStruct) -> TokenStream {
     for_each_attr(item, sql_table_impl)
 }
 
+/// Per-attribute implementation of [`sql_table`].
 pub fn sql_table_impl(
     item: syn::ItemStruct,
     backing_db: syn::Type,
@@ -51,9 +52,10 @@ pub fn sql_table_impl(
             };
 
             quote! {
-                ::storage_noodle_sql::schema::SqlRow {
+                ::storage_noodle_sql::schema::SqlColumn {
                     name: #name.to_string(),
                     ty: ::sqlx::TypeInfo::name(&<#processed_ty as ::sqlx::Type<#backing_db>>::type_info()).to_string(),
+                    column_type: ::storage_noodle_sql::schema::ColumnType::Data,
                 }
             }
         });
@@ -61,11 +63,34 @@ pub fn sql_table_impl(
     let sql_rows_punctuated =
         itertools::Itertools::intersperse(sql_rows, quote! {,}).collect::<TokenStream>();
 
+    // Extra id (primary key) column.
+    let id_column = {
+        let name = syn::LitStr::new(crate::sql::ID_FIELD_NAME, proc_macro2::Span::call_site());
+        quote! {
+            ::storage_noodle_sql::schema::SqlColumn {
+                name: #name.to_string(),
+                ty: ::sqlx::TypeInfo::name(&<#raw_id as ::sqlx::Type<#backing_db>>::type_info()).to_string(),
+                column_type: ::storage_noodle_sql::schema::ColumnType::PrimaryKey,
+            }
+        }
+    };
+
+    // The table name.
+    let name = syn::LitStr::new(&ident.to_string(), proc_macro2::Span::call_site());
+
     // Implement the trait.
     quote! {
-        impl #impl_generics ::storage_noodle_sql::schema::SqlTable<#backing_db> for #ident #type_generics #where_clause {
-            fn rows() -> ::std::vec::Vec<::storage_noodle_sql::schema::SqlRow> {
-                ::std::vec![#sql_rows_punctuated]
+        impl #impl_generics ::storage_noodle_sql::schema::MakeSqlTable<#backing_db> for #ident #type_generics #where_clause {
+            fn table() -> ::storage_noodle_sql::schema::SqlTable {
+                let columns = ::std::vec![
+                    #sql_rows_punctuated,
+                    #id_column
+                ];
+
+                ::storage_noodle_sql::schema::SqlTable {
+                    name: #name.to_string(),
+                    columns,
+                }
             }
         }
     }

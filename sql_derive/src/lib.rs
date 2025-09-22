@@ -5,7 +5,14 @@
 //! Currently we do not perform any compile-time verification of the generated SQL.
 mod attr;
 mod crud;
+mod schema;
 mod sql;
+
+/// Derives `SqlTable` for a type
+#[proc_macro_derive(SqlTable, attributes(config_noodle_raw_id))]
+pub fn sql_table(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    schema::sql_table(syn::parse_macro_input!(input)).into()
+}
 
 /// Derives `Create` for a type
 #[proc_macro_derive(Create, attributes(config_noodle_sql, config_noodle_raw_id))]

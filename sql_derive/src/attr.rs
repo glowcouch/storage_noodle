@@ -2,6 +2,26 @@ use proc_macro2::TokenStream;
 use quote::ToTokens;
 use syn::ItemStruct;
 
+/// Runs `func` on each attribute and returns a list of impl blocks.
+pub fn for_each_attr(
+    item: syn::ItemStruct,
+    func: impl Fn(syn::ItemStruct, syn::Type, syn::Type) -> TokenStream,
+) -> TokenStream {
+    // Get the sql attribute(s). Error if there are none.
+    let sql_attrs = match crate::attr::SqlAttr::from_item(item.clone()) {
+        Ok(value) => value,
+        Err(value) => return value,
+    };
+
+    // Run `create_impl` on the attributes and return the resulting impl block(s).
+    sql_attrs
+        .iter()
+        .map(|crate::attr::SqlAttr { backing_db, raw_id }| {
+            func(item.clone(), backing_db.clone(), raw_id.clone())
+        })
+        .collect()
+}
+
 /// Holds the arguments of a `config_noodle_sql` attribute.
 pub struct SqlAttr {
     pub backing_db: syn::Type,
@@ -172,3 +192,27 @@ pub fn split_generics_with_raw_id_attr(item: ItemStruct, raw_id: syn::Type) -> R
     }
 }
 
+// Replaces type generics in a type with a concrete type.
+pub fn make_concrete(ty: &syn::Type, replace: &syn::Ident, with: &syn::Type) -> syn::Type {
+    match ty {
+        syn::Type::Path(type_path) => if type_path.path.is_ident(replace) {with.clone()} else {
+            // Check generic params.
+            let mut new = type_path.clone();
+
+            // For each angle bracketed generic parameter.
+            new.path.segments.iter_mut().for_each(|segment| {
+                if let syn::PathArguments::AngleBracketed(angle_bracketed_generic_arguments) = &mut segment.arguments {
+                    angle_bracketed_generic_arguments.args.iter_mut().for_each(|arg| {
+                        if let syn::GenericArgument::Type(generic_type) = arg {
+                            // Run `make_concrete` on the generic parameter.
+                            *generic_type = make_concrete(generic_type, replace, with);
+                        }
+                    })
+                }
+            });
+
+            syn::Type::Path(new)
+        }
+        _ => ty.clone(),
+    }
+}

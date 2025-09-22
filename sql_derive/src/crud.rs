@@ -1,25 +1,6 @@
+use crate::attr::for_each_attr;
 use proc_macro2::TokenStream;
 use quote::quote;
-
-/// Runs `func` on each attribute and returns a list of impl blocks.
-fn for_each_attr(
-    item: syn::ItemStruct,
-    func: impl Fn(syn::ItemStruct, syn::Type, syn::Type) -> TokenStream,
-) -> TokenStream {
-    // Get the sql attribute(s). Error if there are none.
-    let sql_attrs = match crate::attr::SqlAttr::from_item(item.clone()) {
-        Ok(value) => value,
-        Err(value) => return value,
-    };
-
-    // Run `create_impl` on the attributes and return the resulting impl block(s).
-    sql_attrs
-        .iter()
-        .map(|crate::attr::SqlAttr { backing_db, raw_id }| {
-            func(item.clone(), backing_db.clone(), raw_id.clone())
-        })
-        .collect()
-}
 
 /// Implementation of [`crate::Create`].
 pub fn create(item: syn::ItemStruct) -> TokenStream {

@@ -94,6 +94,7 @@ async fn main() {
     storage_noodle_sql::Read,
     storage_noodle_sql::Update,
     storage_noodle_sql::Delete,
+    storage_noodle_sql::SqlTable,
     sqlx::FromRow,
 )]
 #[config_noodle_sql(sqlx::sqlite::Sqlite, u32)]

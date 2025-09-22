@@ -17,4 +17,3 @@ fn generate_row(sql_column: &super::SqlColumn) -> String {
         super::ColumnType::PrimaryKey => format!("{name} {ty} PRIMARY KEY"),
     }
 }
-

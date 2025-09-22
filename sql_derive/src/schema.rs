@@ -3,20 +3,20 @@ use proc_macro2::TokenStream;
 use quote::quote;
 
 /// Implementation of [`crate::SqlTable`].
-pub fn sql_table(item: syn::ItemStruct) -> TokenStream {
+pub fn sql_table(item: &syn::ItemStruct) -> TokenStream {
     for_each_attr(item, sql_table_impl)
 }
 
 /// Per-attribute implementation of [`sql_table`].
 pub fn sql_table_impl(
-    item: syn::ItemStruct,
-    backing_db: syn::Type,
-    raw_id: syn::Type,
+    item: &syn::ItemStruct,
+    backing_db: &syn::Type,
+    raw_id: &syn::Type,
 ) -> TokenStream {
     let syn::ItemStruct { ident, fields, .. } = item.clone();
 
     // Get the raw id generic from attributes (if it exists).
-    let raw_id_generic = match crate::attr::raw_id_attr(item.clone()) {
+    let raw_id_generic = match crate::attr::raw_id_attr(item) {
         Some(result) => match result {
             Ok(v) => Some(v),
             Err(e) => return e.to_compile_error(),
@@ -26,7 +26,7 @@ pub fn sql_table_impl(
 
     // Split generics.
     let (impl_generics, type_generics, where_clause) =
-        match crate::attr::split_generics_with_raw_id_attr(item.clone(), raw_id.clone()) {
+        match crate::attr::split_generics_with_raw_id_attr(item, raw_id) {
             Ok(v) => v,
             Err(e) => return e.to_compile_error(),
         };
@@ -39,15 +39,13 @@ pub fn sql_table_impl(
             // Fall back to index if there is no field name (unit structs).
             let name = syn::LitStr::new(
                 &ident
-                    .clone()
-                    .map(|id| id.to_string())
-                    .unwrap_or(index.to_string()),
+                    .clone().map_or_else(|| index.to_string(), |id| id.to_string()),
                 proc_macro2::Span::call_site(),
             );
 
             // Replace the id generic (if it exists) with the raw id concrete type.
             let processed_ty = match &raw_id_generic {
-                Some(raw_id_generic) => crate::attr::make_concrete(ty, raw_id_generic, &raw_id),
+                Some(raw_id_generic) => crate::attr::make_concrete(ty, raw_id_generic, raw_id),
                 None => ty.clone(),
             };
 

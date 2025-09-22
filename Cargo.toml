@@ -26,7 +26,8 @@ itertools = "0.14.0"
 std_instead_of_core = "forbid"
 std_instead_of_alloc = "forbid"
 alloc_instead_of_core = "forbid"
-#missing_docs_in_private_items = "deny"
+missing_docs_in_private_items = "forbid"
+pedantic = "forbid"
 
-#[workspace.lints.rust]
-#missing_docs = "deny"
+[workspace.lints.rust]
+missing_docs = "forbid"

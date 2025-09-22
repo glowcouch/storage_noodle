@@ -12,7 +12,7 @@ pub trait BackingStorage {
 }
 
 /// An Id that references a specific type.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct AssocId<T: ?Sized, RawId> {
     /// The inner raw id.
     inner: RawId,
@@ -23,7 +23,7 @@ pub struct AssocId<T: ?Sized, RawId> {
 
 impl<T: ?Sized, RawId> AssocId<T, RawId> {
     /// Create a new instance.
-    pub fn new(raw: RawId) -> Self {
+    pub const fn new(raw: RawId) -> Self {
         Self {
             inner: raw,
             phantom: PhantomData,
@@ -31,7 +31,7 @@ impl<T: ?Sized, RawId> AssocId<T, RawId> {
     }
 
     /// Get a reference to the inner raw Id.
-    pub fn as_raw(&self) -> &RawId {
+    pub const fn as_raw(&self) -> &RawId {
         &self.inner
     }
 }

@@ -11,7 +11,7 @@ pub struct SqlTable {
     pub columns: Vec<SqlColumn>,
 }
 
-// Represents an SQL column.
+/// Represents an SQL column.
 #[derive(Debug)]
 pub struct SqlColumn {
     /// The column's name.
@@ -20,7 +20,7 @@ pub struct SqlColumn {
     /// The column's type.
     pub ty: String,
 
-    /// The column's ColumnType.
+    /// The column's `ColumnType`.
     pub column_type: ColumnType,
 }
 
@@ -30,7 +30,7 @@ pub enum ColumnType {
     /// A data column.
     Data,
 
-    // A primary key column.
+    /// A primary key column.
     PrimaryKey,
 }
 
@@ -55,7 +55,7 @@ pub struct SchemaBuilder<G: Fn(&SqlTable) -> String, DB: sqlx::Database> {
 
 impl<G: Fn(&SqlTable) -> String, DB: sqlx::Database> SchemaBuilder<G, DB> {
     /// Create a new instance.
-    pub fn new(builder: G) -> Self {
+    pub const fn new(builder: G) -> Self {
         Self {
             tables: Vec::new(),
             generator: builder,
@@ -64,6 +64,7 @@ impl<G: Fn(&SqlTable) -> String, DB: sqlx::Database> SchemaBuilder<G, DB> {
     }
 
     /// Add a type to the schema.
+    #[must_use]
     pub fn add_type<T: MakeSqlTable<DB>>(mut self) -> Self {
         self.tables.push(T::table());
         self

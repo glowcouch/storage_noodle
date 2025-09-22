@@ -4,8 +4,8 @@ use syn::ItemStruct;
 
 /// Runs `func` on each attribute and returns a list of impl blocks.
 pub fn for_each_attr(
-    item: syn::ItemStruct,
-    func: impl Fn(syn::ItemStruct, syn::Type, syn::Type) -> TokenStream,
+    item: &syn::ItemStruct,
+    func: impl Fn(&syn::ItemStruct, &syn::Type, &syn::Type) -> TokenStream,
 ) -> TokenStream {
     // Get the sql attribute(s). Error if there are none.
     let sql_attrs = match crate::attr::SqlAttr::from_item(item.clone()) {
@@ -16,15 +16,16 @@ pub fn for_each_attr(
     // Run `create_impl` on the attributes and return the resulting impl block(s).
     sql_attrs
         .iter()
-        .map(|crate::attr::SqlAttr { backing_db, raw_id }| {
-            func(item.clone(), backing_db.clone(), raw_id.clone())
-        })
+        .map(|crate::attr::SqlAttr { backing_db, raw_id }| func(item, backing_db, raw_id))
         .collect()
 }
 
 /// Holds the arguments of a `config_noodle_sql` attribute.
 pub struct SqlAttr {
+    /// The backing database type (typically a type implementing `sqlx::Database`).
     pub backing_db: syn::Type,
+
+    /// The raw id type.
     pub raw_id: syn::Type,
 }
 
@@ -32,28 +33,28 @@ impl SqlAttr {
     /// Try to convert from an attribute to a [`SqlAttr`].
     ///
     /// Returns [`None`] if the error is not a `config_noodle_sql` attribute.
-    pub fn from_attribute(attr: syn::Attribute) -> syn::Result<Option<SqlAttr>> {
+    pub fn from_attribute(attr: &syn::Attribute) -> syn::Result<Option<Self>> {
         // Check that the ident is correct.
         if attr.path().is_ident("config_noodle_sql") {
             // Parse the inner punctuated arguments.
             let input: syn::punctuated::Punctuated<syn::Type, syn::Token![,]> = attr
                 .parse_args_with(syn::punctuated::Punctuated::parse_terminated)
-                .map_err(|e| syn::Error::new_spanned(&attr, e.to_string()))?;
+                .map_err(|e| syn::Error::new_spanned(attr, e.to_string()))?;
 
             // Check that there are exactly two arguments.
-            if input.len() != 2 {
-                let error = syn::Error::new_spanned(
-                    &attr,
-                    "must be in the format `config_noodle_sql(backing_db, raw_id)`",
-                );
-
-                Err(error)
-            } else {
+            if input.len() == 2 {
                 // Return the arguments.
                 Ok(Some(Self {
                     backing_db: input[0].clone(),
                     raw_id: input[1].clone(),
                 }))
+            } else {
+                let error = syn::Error::new_spanned(
+                    attr,
+                    "must be in the format `config_noodle_sql(backing_db, raw_id)`",
+                );
+
+                Err(error)
             }
         } else {
             Ok(None)
@@ -64,23 +65,23 @@ impl SqlAttr {
     ///
     /// Returns a compile error if there are none. Returns
     /// multiple errors if there were multiple errors during parsing.
-    pub fn from_item(item: syn::ItemStruct) -> Result<Vec<crate::attr::SqlAttr>, TokenStream> {
+    pub fn from_item(item: syn::ItemStruct) -> Result<Vec<Self>, TokenStream> {
         // Parse the attributes.
         let parsed_attrs = item
             .attrs
             .clone()
             .into_iter()
-            .map(crate::attr::SqlAttr::from_attribute);
+            .map(|a| Self::from_attribute(&a));
 
         // A list of errors, if any.
         let errors: Vec<_> = parsed_attrs
             .clone()
-            .filter_map(|result| result.err())
+            .filter_map(core::result::Result::err)
             .collect();
 
         // Return errors, if any.
         if !errors.is_empty() {
-            return Err(errors.iter().map(|e| e.to_compile_error()).collect());
+            return Err(errors.iter().map(syn::Error::to_compile_error).collect());
         }
 
         // A list of the attributes we care about.
@@ -102,8 +103,8 @@ impl SqlAttr {
     }
 }
 
-// Extracts a type generic from the `config_noodle_raw_id` attribute.
-pub fn raw_id_attr(item: ItemStruct) -> Option<Result<syn::Ident, syn::Error>> {
+/// Extracts a type generic from the `config_noodle_raw_id` attribute.
+pub fn raw_id_attr(item: &ItemStruct) -> Option<Result<syn::Ident, syn::Error>> {
     item.attrs.iter().find_map(|attr| {
         if attr.path().is_ident("config_noodle_raw_id") {
             Some(attr.parse_args())
@@ -113,13 +114,13 @@ pub fn raw_id_attr(item: ItemStruct) -> Option<Result<syn::Ident, syn::Error>> {
     })
 }
 
-/// Similar to [`syn::Generics::split_for_impl`]. Returns (impl generics, type generics, where clause). Aditionally, it turns the 
+/// Similar to [`syn::Generics::split_for_impl`]. Returns (impl generics, type generics, where clause). Aditionally, it turns the
 /// `to_replace` generic into the concrete type `concrete` - removing it from the impl generics and
 /// where clause.
 pub fn split_for_impl_make_concrete(
     generics: &syn::Generics,
-    to_replace: Vec<syn::Ident>,
-    concrete: syn::Type,
+    to_replace: &[syn::Ident],
+    concrete: &syn::Type,
 ) -> (TokenStream, TokenStream, Option<TokenStream>) {
     // The generics we want to replace.
     let matched_generics = generics
@@ -137,13 +138,12 @@ pub fn split_for_impl_make_concrete(
 
     // Impl & type generics without the annotated generics.
     let filtered_generics = syn::Generics {
-        params: syn::punctuated::Punctuated::from_iter(
-            generics
-                .params
-                .clone()
-                .into_iter()
-                .filter(|param| !matched_generics.contains(&param)),
-        ),
+        params: generics
+            .params
+            .clone()
+            .into_iter()
+            .filter(|param| !matched_generics.contains(&param))
+            .collect(),
         ..generics.clone()
     };
 
@@ -154,7 +154,7 @@ pub fn split_for_impl_make_concrete(
     let filtered_where_clause = filtered_generics.split_for_impl().2;
 
     // Substitute the type generics.
-    let substituted_type_generics = generics.params.iter().map(|param| 
+    let substituted_type_generics = generics.params.iter().map(|param|
         // "Render" the generics to put in the type. Like this: `SomeType<A, B, C>`.
         match param {
         syn::GenericParam::Lifetime(lifetime_param) => lifetime_param.lifetime.to_token_stream(),
@@ -171,47 +171,68 @@ pub fn split_for_impl_make_concrete(
     });
 
     // Comma punctuated list of type generics.
-    let type_generics: TokenStream = itertools::Itertools::intersperse(substituted_type_generics, quote::quote! {,}).collect();
+    let type_generics: TokenStream =
+        itertools::Itertools::intersperse(substituted_type_generics, quote::quote! {,}).collect();
 
     (
         filtered_impl_generics.to_token_stream(),
         quote::quote! {<#type_generics>},
-        filtered_where_clause.map(|w| w.to_token_stream()),
+        filtered_where_clause.map(quote::ToTokens::to_token_stream),
     )
 }
 
 /// Produces split generics from a struct using [`split_for_impl_make_concrete`] and [`raw_id_attr`]. Returns (impl generics, type generics, where clause).
-pub fn split_generics_with_raw_id_attr(item: ItemStruct, raw_id: syn::Type) -> Result<(TokenStream, TokenStream, Option<TokenStream>), syn::Error> {
-    if let Some(to_replace) = raw_id_attr(item.clone()) {
+pub fn split_generics_with_raw_id_attr(
+    item: &ItemStruct,
+    raw_id: &syn::Type,
+) -> Result<(TokenStream, TokenStream, Option<TokenStream>), syn::Error> {
+    if let Some(to_replace) = raw_id_attr(item) {
         // Use [`split_for_impl_make_concrete`].
-        Ok(split_for_impl_make_concrete(&item.generics, vec![to_replace?], raw_id))
+        Ok(split_for_impl_make_concrete(
+            &item.generics,
+            &[to_replace?],
+            raw_id,
+        ))
     } else {
         // Use syn's split_for_impl.
         let (r#impl, r#type, r#where) = item.generics.split_for_impl();
-        Ok((r#impl.to_token_stream(), r#type.to_token_stream(), r#where.map(|w| w.to_token_stream())))
+        Ok((
+            r#impl.to_token_stream(),
+            r#type.to_token_stream(),
+            r#where.map(quote::ToTokens::to_token_stream),
+        ))
     }
 }
 
-// Replaces type generics in a type with a concrete type.
+/// Replaces type generics in a type with a concrete type.
 pub fn make_concrete(ty: &syn::Type, replace: &syn::Ident, with: &syn::Type) -> syn::Type {
     match ty {
-        syn::Type::Path(type_path) => if type_path.path.is_ident(replace) {with.clone()} else {
-            // Check generic params.
-            let mut new = type_path.clone();
+        syn::Type::Path(type_path) => {
+            if type_path.path.is_ident(replace) {
+                with.clone()
+            } else {
+                // Check generic params.
+                let mut new = type_path.clone();
 
-            // For each angle bracketed generic parameter.
-            new.path.segments.iter_mut().for_each(|segment| {
-                if let syn::PathArguments::AngleBracketed(angle_bracketed_generic_arguments) = &mut segment.arguments {
-                    angle_bracketed_generic_arguments.args.iter_mut().for_each(|arg| {
-                        if let syn::GenericArgument::Type(generic_type) = arg {
-                            // Run `make_concrete` on the generic parameter.
-                            *generic_type = make_concrete(generic_type, replace, with);
-                        }
-                    })
-                }
-            });
+                // For each angle bracketed generic parameter.
+                new.path.segments.iter_mut().for_each(|segment| {
+                    if let syn::PathArguments::AngleBracketed(angle_bracketed_generic_arguments) =
+                        &mut segment.arguments
+                    {
+                        angle_bracketed_generic_arguments
+                            .args
+                            .iter_mut()
+                            .for_each(|arg| {
+                                if let syn::GenericArgument::Type(generic_type) = arg {
+                                    // Run `make_concrete` on the generic parameter.
+                                    *generic_type = make_concrete(generic_type, replace, with);
+                                }
+                            });
+                    }
+                });
 
-            syn::Type::Path(new)
+                syn::Type::Path(new)
+            }
         }
         _ => ty.clone(),
     }

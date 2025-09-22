@@ -6,6 +6,7 @@
 //!
 //! The Id field is defined by [`ID_FIELD_NAME`].
 
+/// The standard name of the id field.
 pub const ID_FIELD_NAME: &str = "Id";
 
 /// Describes a SQL column.
@@ -19,7 +20,7 @@ pub struct Column {
 
 impl Column {
     /// Creates a list of [`Column`]s from a [`syn::Fields`].
-    pub fn from_fields(value: syn::Fields) -> Vec<Self> {
+    pub fn from_fields(value: &syn::Fields) -> Vec<Self> {
         value
             .iter()
             .enumerate()
@@ -29,7 +30,7 @@ impl Column {
                     syn::Ident::new(&i.to_string(), proc_macro2::Span::mixed_site())
                 });
 
-                Column {
+                Self {
                     name: ident.to_string(),
                     ident,
                 }

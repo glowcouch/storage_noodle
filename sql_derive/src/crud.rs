@@ -43,15 +43,14 @@ pub fn delete(item: syn::ItemStruct) -> TokenStream {
 
 /// Per-attribute implementation for [`create`].
 fn create_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) -> TokenStream {
-    let syn::ItemStruct {
-        ident,
-        fields,
-        generics,
-        ..
-    } = item;
+    let syn::ItemStruct { ident, fields, .. } = item.clone();
 
     // Split generics.
-    let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
+    let (impl_generics, type_generics, where_clause) =
+        match crate::attr::split_generics_with_raw_id_attr(item.clone(), raw_id.clone()) {
+            Ok(v) => v,
+            Err(e) => return e.to_compile_error(),
+        };
 
     // The table name.
     let table = ident.to_string();
@@ -123,15 +122,14 @@ fn create_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) 
 
 /// Per-attribute implementation for [`read`].
 fn read_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) -> TokenStream {
-    let syn::ItemStruct {
-        ident,
-        fields,
-        generics,
-        ..
-    } = item;
+    let syn::ItemStruct { ident, fields, .. } = item.clone();
 
     // Split generics.
-    let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
+    let (impl_generics, type_generics, where_clause) =
+        match crate::attr::split_generics_with_raw_id_attr(item.clone(), raw_id.clone()) {
+            Ok(v) => v,
+            Err(e) => return e.to_compile_error(),
+        };
 
     // The table name.
     let table = ident.to_string();
@@ -196,15 +194,14 @@ fn read_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) ->
 
 /// Per-attribute implementation for [`update`].
 fn update_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) -> TokenStream {
-    let syn::ItemStruct {
-        ident,
-        fields,
-        generics,
-        ..
-    } = item;
+    let syn::ItemStruct { ident, fields, .. } = item.clone();
 
     // Split generics.
-    let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
+    let (impl_generics, type_generics, where_clause) =
+        match crate::attr::split_generics_with_raw_id_attr(item.clone(), raw_id.clone()) {
+            Ok(v) => v,
+            Err(e) => return e.to_compile_error(),
+        };
 
     // The table name.
     let table = ident.to_string();
@@ -281,15 +278,14 @@ fn update_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) 
 
 /// Per-attribute implementation for [`delete`].
 fn delete_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) -> TokenStream {
-    let syn::ItemStruct {
-        ident,
-        fields,
-        generics,
-        ..
-    } = item;
+    let syn::ItemStruct { ident, fields, .. } = item.clone();
 
     // Split generics.
-    let (impl_generics, type_generics, where_clause) = generics.split_for_impl();
+    let (impl_generics, type_generics, where_clause) =
+        match crate::attr::split_generics_with_raw_id_attr(item.clone(), raw_id.clone()) {
+            Ok(v) => v,
+            Err(e) => return e.to_compile_error(),
+        };
 
     // The table name.
     let table = ident.to_string();
@@ -303,7 +299,7 @@ fn delete_impl(item: syn::ItemStruct, backing_db: syn::Type, raw_id: syn::Type) 
             "
                 DELETE FROM {}
                 WHERE {}=?
-                RETURNING ({});
+                RETURNING {};
             ",
             table,
             crate::sql::ID_FIELD_NAME,

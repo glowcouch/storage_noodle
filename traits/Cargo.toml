@@ -3,5 +3,12 @@ name = "storage_noodle_traits"
 rust-version = { workspace = true }
 edition = { workspace = true }
 
+[dependencies]
+sqlx = { workspace = true, optional = true }
+
+[features]
+# Implements sqlx traits for `AssocId`
+"sqlx" = ["dep:sqlx"]
+
 [lints]
 workspace = true

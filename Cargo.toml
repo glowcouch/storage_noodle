@@ -19,6 +19,9 @@ quote = "1.0.40"
 # test deps
 tokio = { version = "1.47.1" }
 
+# utils
+itertools = "0.14.0"
+
 [workspace.lints.clippy]
 std_instead_of_core = "forbid"
 std_instead_of_alloc = "forbid"

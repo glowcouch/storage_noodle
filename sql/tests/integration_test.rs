@@ -1,3 +1,5 @@
+//! Integration test for SQL backing storage.
+
 use storage_noodle_traits::{Create, Delete, Read, Update};
 
 /// The id type used for referencing items.

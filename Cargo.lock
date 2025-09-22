@@ -898,6 +898,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "readme-rustdocifier"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08ad765b21a08b1a8e5cdce052719188a23772bcbefb3c439f0baaf62c56ceac"
+
+[[package]]
 name = "redox_syscall"
 version = "0.5.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1299,6 +1305,7 @@ dependencies = [
 name = "storage_noodle_traits"
 version = "0.0.0"
 dependencies = [
+ "readme-rustdocifier",
  "sqlx",
 ]
 

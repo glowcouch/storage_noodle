@@ -1,4 +1,5 @@
 #[cfg(feature = "sqlite_schema")]
+/// Sqlite schema generator.
 pub mod sqlite;
 
 /// Represents an SQL table.

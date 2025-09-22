@@ -4,7 +4,7 @@
 //!
 //! Column names are copied directly from the field name.
 //!
-//! The Id field is defined by [`ID_FIELD_NAME`].
+//! The Id field is defined by `ID_FIELD_NAME`.
 
 /// The standard name of the id field.
 pub const ID_FIELD_NAME: &str = "Id";

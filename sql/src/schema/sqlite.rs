@@ -1,11 +1,11 @@
-// Generate a CREATE TABLE schema query for sqlite.
+/// Generate a CREATE TABLE schema query for sqlite.
 pub fn generate_schema(table: &super::SqlTable) -> String {
     let columns = table.columns.iter().map(generate_row).collect::<Vec<_>>();
 
     format!("CREATE TABLE {} ({});", table.name, columns.join(", "))
 }
 
-// Generate the table rows, types, and constraints for sqlite.
+/// Generate the table rows, types, and constraints for sqlite.
 fn generate_row(sql_column: &super::SqlColumn) -> String {
     let super::SqlColumn {
         name,

@@ -1,4 +1,4 @@
-//! Traits that abstract over storage backends.
+#![doc = include_str!(concat!(env!("OUT_DIR"), "/README-rustdocified.md"))]
 
 use core::{marker::PhantomData, ops::Deref};
 

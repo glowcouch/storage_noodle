@@ -1,4 +1,4 @@
-//! A backing storage implementation for [`storage_noodle_traits`].
+//! An SQL backing storage implementation for [`storage_noodle_traits`].
 
 use core::marker::PhantomData;
 

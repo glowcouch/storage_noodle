@@ -1,5 +1,8 @@
 use storage_noodle_traits::{Create, Delete, Read, Update};
 
+/// The id type used for referencing items.
+type RawId = u32;
+
 #[tokio::test]
 async fn main() {
     // Set up the backing storage.
@@ -7,27 +10,22 @@ async fn main() {
         .await
         .unwrap();
 
-    // Schema generation is not implemented yet
-    sqlx::query(
-        "
-            CREATE TABLE Cookie (
-            flavour TEXT,
-            recipe INTEGER,
-            Id INTEGER PRIMARY Key
-            );
-
-            CREATE TABLE Recipe (
-            ingredients TEXT,
-            Id INTEGER PRIMARY Key
-            );
-        ",
+    // Generate and execute the schema.
+    let schema = storage_noodle_sql::schema::SchemaBuilder::<_, sqlx::Sqlite>::new(
+        storage_noodle_sql::schema::sqlite::generate_schema,
     )
-    .execute(&db_pool)
-    .await
-    .unwrap();
+    .add_type::<Cookie<RawId>>()
+    .add_type::<Recipe>()
+    .build();
+    sqlx::query(&schema).execute(&db_pool).await.unwrap();
 
+    // Set up the backing storage.
     let backing: storage_noodle_sql::SqlBacking<_, u32> =
         storage_noodle_sql::SqlBacking::new(db_pool);
+
+    // ==========
+    // BEGIN TEST
+    // ==========
 
     // Create a recipe
     let choco_recipe_id = Recipe {
@@ -94,9 +92,10 @@ async fn main() {
     storage_noodle_sql::Read,
     storage_noodle_sql::Update,
     storage_noodle_sql::Delete,
+    storage_noodle_sql::SqlTable,
     sqlx::FromRow,
 )]
-#[config_noodle_sql(sqlx::sqlite::Sqlite, u32)]
+#[config_noodle_sql(sqlx::sqlite::Sqlite, RawId)]
 #[config_noodle_raw_id(RawId)]
 struct Cookie<RawId> {
     flavour: String,
@@ -110,9 +109,10 @@ struct Cookie<RawId> {
     storage_noodle_sql::Read,
     storage_noodle_sql::Update,
     storage_noodle_sql::Delete,
+    storage_noodle_sql::SqlTable,
     sqlx::FromRow,
 )]
-#[config_noodle_sql(sqlx::sqlite::Sqlite, u32)]
+#[config_noodle_sql(sqlx::sqlite::Sqlite, RawId)]
 struct Recipe {
     ingredients: String,
 }

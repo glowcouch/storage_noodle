@@ -3,6 +3,8 @@ use core::marker::PhantomData;
 pub use storage_noodle_sql_derive::*;
 use storage_noodle_traits::BackingStorage;
 
+pub mod schema;
+
 #[derive(Debug, Clone)]
 pub struct SqlBacking<DB: sqlx::Database, RawId> {
     pub pool: sqlx::Pool<DB>,

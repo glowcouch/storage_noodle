@@ -78,10 +78,9 @@ pub trait Delete<S: BackingStorage>: Sized {
     /// The error type that can be returned from [`Delete::delete`].
     type Error;
 
-    /// Deletes an item from the storage backend. Will return the item that was deleted if it
-    /// exists, and [`None`] if it doesn't exist.
+    /// Deletes an item from the storage backend. Will return [`None`] if the item doesn't exist.
     fn delete(
         storage: impl Deref<Target = S> + Send,
         id: impl Deref<Target = AssocId<Self, S::RawId>> + Send,
-    ) -> impl Future<Output = Result<Option<Self>, Self::Error>> + Send;
+    ) -> impl Future<Output = Result<Option<()>, Self::Error>> + Send;
 }

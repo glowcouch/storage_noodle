@@ -35,4 +35,4 @@ The Delete trait is used to delete an item from the backing storage. The `Delete
 
 * In the case of a failure, the future MUST return `Err()`.
 * In the case of a partial success, where the operation succeeded, but the item doesn't exist, the future MUST return `Ok(None)`.
-* In the case of a full success, the future MUST return `Ok(Some(Self))` - where `Self` is the item that was just deleted.
+* In the case of a full success, the future MUST return `Ok(Some(()))`.

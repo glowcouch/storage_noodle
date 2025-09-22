@@ -259,7 +259,7 @@ fn update_impl(item: &syn::ItemStruct, backing_db: &syn::Type, raw_id: &syn::Typ
 
 /// Per-attribute implementation for [`delete`].
 fn delete_impl(item: &syn::ItemStruct, backing_db: &syn::Type, raw_id: &syn::Type) -> TokenStream {
-    let syn::ItemStruct { ident, fields, .. } = item.clone();
+    let syn::ItemStruct { ident, .. } = item.clone();
 
     // Split generics.
     let (impl_generics, type_generics, where_clause) =
@@ -271,24 +271,15 @@ fn delete_impl(item: &syn::ItemStruct, backing_db: &syn::Type, raw_id: &syn::Typ
     // The table name.
     let table = ident.to_string();
 
-    // List of columns.
-    let columns = crate::sql::Column::from_fields(&fields);
-
     // The SQL query to run.
     let query = {
         let query = format!(
             "
                 DELETE FROM {}
-                WHERE {}=?
-                RETURNING {};
+                WHERE {}=?;
             ",
             table,
             crate::sql::ID_FIELD_NAME,
-            columns
-                .iter()
-                .map(|c| c.name.clone())
-                .collect::<Vec<_>>()
-                .join(", "), // List of column names (in order).
         );
         syn::LitStr::new(&query, proc_macro2::Span::mixed_site())
     };
@@ -303,18 +294,15 @@ fn delete_impl(item: &syn::ItemStruct, backing_db: &syn::Type, raw_id: &syn::Typ
                 storage: impl ::core::ops::Deref<Target = ::storage_noodle_sql::SqlBacking<#backing_db, #raw_id>>
                 + ::core::marker::Send,
                 id: impl ::core::ops::Deref<Target = ::storage_noodle_sql::macro_helpers::AssocId<Self, #raw_id>> + ::core::marker::Send
-            ) -> impl Future<Output = ::core::result::Result<::core::option::Option<Self>, Self::Error>> + ::core::marker::Send {
+            ) -> impl Future<Output = ::core::result::Result<::core::option::Option<()>, Self::Error>> + ::core::marker::Send {
                 async move {
-                    // Build the query.
-                    let query = ::sqlx::query_as(#query).bind(id.as_raw());
-
-                    // Get the row back from the query.
-                    let result = query.fetch_one(&storage.pool).await;
+                    // Build & execute the query.
+                    let result = ::sqlx::query(#query).bind(id.as_raw()).execute(&storage.pool).await;
 
                     match result {
                         //= traits/spec.md#delete-trait
-                        //# * In the case of a full success, the future MUST return `Ok(Some(Self))` - where `Self` is the item that was just deleted.
-                        Ok(row) => Ok(Some(row)),
+                        //# * In the case of a full success, the future MUST return `Ok(Some(()))`.
+                        Ok(row) => Ok(Some(())),
 
                         //= traits/spec.md#delete-trait
                         //# * In the case of a partial success, where the operation succeeded, but the item doesn't exist, the future MUST return `Ok(None)`.

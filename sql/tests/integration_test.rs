@@ -75,10 +75,7 @@ async fn main() {
     assert_eq!(returned_cookie, new_cookie);
 
     // Delete the record.
-    let deleted_cookie = Cookie::delete(&backing, &cookie_id).await.unwrap().unwrap();
-
-    // Check that the cookie we deleted has not changed.
-    assert_eq!(returned_cookie, deleted_cookie);
+    Cookie::delete(&backing, &cookie_id).await.unwrap().unwrap();
 
     // Try to read the record again.
     let should_be_none = Cookie::read(&backing, &cookie_id).await.unwrap();

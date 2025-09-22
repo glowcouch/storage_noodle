@@ -1,4 +1,6 @@
 use proc_macro2::TokenStream;
+use quote::ToTokens;
+use syn::ItemStruct;
 
 /// Holds the arguments of a `config_noodle_sql` attribute.
 pub struct SqlAttr {
@@ -79,3 +81,94 @@ impl SqlAttr {
         Ok(sql_attrs)
     }
 }
+
+// Extracts a type generic from the `config_noodle_raw_id` attribute.
+pub fn raw_id_attr(item: ItemStruct) -> Option<Result<syn::Ident, syn::Error>> {
+    item.attrs.iter().find_map(|attr| {
+        if attr.path().is_ident("config_noodle_raw_id") {
+            Some(attr.parse_args())
+        } else {
+            None
+        }
+    })
+}
+
+/// Similar to [`syn::Generics::split_for_impl`]. Returns (impl generics, type generics, where clause). Aditionally, it turns the 
+/// `to_replace` generic into the concrete type `concrete` - removing it from the impl generics and
+/// where clause.
+pub fn split_for_impl_make_concrete(
+    generics: &syn::Generics,
+    to_replace: Vec<syn::Ident>,
+    concrete: syn::Type,
+) -> (TokenStream, TokenStream, Option<TokenStream>) {
+    // The generics we want to replace.
+    let matched_generics = generics
+        .params
+        .iter()
+        .filter(|param| {
+            if let syn::GenericParam::Type(ty) = param {
+                // Does the generic match?
+                to_replace.contains(&ty.ident)
+            } else {
+                false
+            }
+        })
+        .collect::<Vec<_>>();
+
+    // Impl & type generics without the annotated generics.
+    let filtered_generics = syn::Generics {
+        params: syn::punctuated::Punctuated::from_iter(
+            generics
+                .params
+                .clone()
+                .into_iter()
+                .filter(|param| !matched_generics.contains(&param)),
+        ),
+        ..generics.clone()
+    };
+
+    // Filtered generics split for impl.
+    let filtered_impl_generics = filtered_generics.split_for_impl().0;
+
+    // Filtered generics split for where clause.
+    let filtered_where_clause = filtered_generics.split_for_impl().2;
+
+    // Substitute the type generics.
+    let substituted_type_generics = generics.params.iter().map(|param| 
+        // "Render" the generics to put in the type. Like this: `SomeType<A, B, C>`.
+        match param {
+        syn::GenericParam::Lifetime(lifetime_param) => lifetime_param.lifetime.to_token_stream(),
+        syn::GenericParam::Type(type_param) => {
+            // If the generic parameter is annotated.
+            if matched_generics.contains(&param) {
+                // Replace it with the concrete type.
+                concrete.to_token_stream()
+            } else {
+                type_param.ident.to_token_stream()
+            }
+        }
+        syn::GenericParam::Const(const_param) => const_param.ident.to_token_stream(),
+    });
+
+    // Comma punctuated list of type generics.
+    let type_generics: TokenStream = itertools::Itertools::intersperse(substituted_type_generics, quote::quote! {,}).collect();
+
+    (
+        filtered_impl_generics.to_token_stream(),
+        quote::quote! {<#type_generics>},
+        filtered_where_clause.map(|w| w.to_token_stream()),
+    )
+}
+
+/// Produces split generics from a struct using [`split_for_impl_make_concrete`] and [`raw_id_attr`]. Returns (impl generics, type generics, where clause).
+pub fn split_generics_with_raw_id_attr(item: ItemStruct, raw_id: syn::Type) -> Result<(TokenStream, TokenStream, Option<TokenStream>), syn::Error> {
+    if let Some(to_replace) = raw_id_attr(item.clone()) {
+        // Use [`split_for_impl_make_concrete`].
+        Ok(split_for_impl_make_concrete(&item.generics, vec![to_replace?], raw_id))
+    } else {
+        // Use syn's split_for_impl.
+        let (r#impl, r#type, r#where) = item.generics.split_for_impl();
+        Ok((r#impl.to_token_stream(), r#type.to_token_stream(), r#where.map(|w| w.to_token_stream())))
+    }
+}
+

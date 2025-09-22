@@ -2,6 +2,9 @@
 
 use core::{marker::PhantomData, ops::Deref};
 
+#[cfg(feature = "sqlx")]
+pub mod sqlx;
+
 /// A type that can store persistant data.
 pub trait BackingStorage {
     /// The id type that is used to identify specific items.
@@ -9,6 +12,7 @@ pub trait BackingStorage {
 }
 
 /// An Id that references a specific type.
+#[derive(Debug, PartialEq)]
 pub struct AssocId<T: ?Sized, RawId> {
     /// The inner raw id.
     inner: RawId,

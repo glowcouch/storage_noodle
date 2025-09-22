@@ -17,4 +17,4 @@ jobs:
 
       - name: run clippy
         run: |
-          cargo clippy
+          cargo clippy --all-features

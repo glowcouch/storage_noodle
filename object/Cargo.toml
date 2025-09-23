@@ -1,0 +1,10 @@
+[package]
+name = "storage_noodle_object"
+rust-version = { workspace = true }
+edition = { workspace = true }
+
+[dependencies]
+bytes = { workspace = true }
+
+[lints]
+workspace = true

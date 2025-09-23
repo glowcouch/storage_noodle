@@ -15,6 +15,7 @@ source = "traits/spec.md"
 
 [report.html]
 enabled = true
+path = ".duvet/reports/sql_report.html"
 
 # Enable snapshots to prevent requirement coverage regressions
 [report.snapshot]

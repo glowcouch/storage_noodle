@@ -52,6 +52,10 @@ impl Create<S3Backing> for Object {
             .send()
             .await;
 
+        //= traits/spec.md#create-trait
+        //# * In the case of a failure, the future MUST return `Err()`.
+        //= traits/spec.md#create-trait
+        //# * In the case of a success, the future MUST return `Ok(AssocId<Self, RawId>)` - where the `AssocId` holds the Id of the newly created item.
         result.map(|response| storage_noodle_traits::AssocId::new(response.object))
     }
 }
@@ -81,16 +85,21 @@ impl Read<S3Backing> for Object {
                 // FIXME: using `to_bytes` is not optimal.
                 let segmented_bytes = response.content.to_segmented_bytes().await?;
                 let bytes = segmented_bytes.to_bytes();
+
+                //= traits/spec.md#read-trait
+                //# * In the case of a full success, the future MUST return `Ok(Some(Self))` - where `Self` is the result of the read.
                 Ok(Some(Self { data: bytes }))
             }
             Err(e) => {
-                if let minio::s3::error::Error::S3Error(s3e) = &e {
-                    if let minio::s3::error::ErrorCode::NoSuchKey = s3e.code {
-                        Ok(None)
-                    } else {
-                        Err(e)
-                    }
+                if let minio::s3::error::Error::S3Error(s3e) = &e
+                    && let minio::s3::error::ErrorCode::NoSuchKey = s3e.code
+                {
+                    //= traits/spec.md#read-trait
+                    //# * In the case of a partial success, where the operation succeeded, but the item doesn't exist, the future MUST return `Ok(None)`.
+                    Ok(None)
                 } else {
+                    //= traits/spec.md#read-trait
+                    //# * In the case of a failure, the future MUST return `Err()`.
                     Err(e)
                 }
             }
@@ -120,8 +129,12 @@ impl Update<S3Backing> for Object {
             && let minio::s3::error::Error::S3Error(s3e) = &e
         {
             if let minio::s3::error::ErrorCode::NoSuchKey = s3e.code {
+                //= traits/spec.md#update-trait
+                //# * In the case of a partial success, where the operation succeeded, but the item doesn't exist, the future MUST return `Ok(None)`.
                 return Ok(None);
             }
+            //= traits/spec.md#update-trait
+            //# * In the case of a failure, the future MUST return `Err()`.
             return Err(e);
         }
 
@@ -136,6 +149,10 @@ impl Update<S3Backing> for Object {
             .send()
             .await;
 
+        //= traits/spec.md#update-trait
+        //# * In the case of a failure, the future MUST return `Err()`.
+        //= traits/spec.md#update-trait
+        //# * In the case of a full success, the future MUST return `Ok(Some(()))`.
         result.map(|_| Some(()))
     }
 }
@@ -161,15 +178,19 @@ impl Delete<S3Backing> for Object {
 
         // Return Ok(None) if the object doesn't exist.
         match result {
+            //= traits/spec.md#delete-trait
+            //# * In the case of a full success, the future MUST return `Ok(Some(()))`.
             Ok(_) => Ok(Some(())),
             Err(e) => {
-                if let minio::s3::error::Error::S3Error(s3e) = &e {
-                    if let minio::s3::error::ErrorCode::NoSuchKey = s3e.code {
-                        Ok(None)
-                    } else {
-                        Err(e)
-                    }
+                if let minio::s3::error::Error::S3Error(s3e) = &e
+                    && let minio::s3::error::ErrorCode::NoSuchKey = s3e.code
+                {
+                    //= traits/spec.md#delete-trait
+                    //# * In the case of a partial success, where the operation succeeded, but the item doesn't exist, the future MUST return `Ok(None)`.
+                    Ok(None)
                 } else {
+                    //= traits/spec.md#delete-trait
+                    //# * In the case of a failure, the future MUST return `Err()`.
                     Err(e)
                 }
             }

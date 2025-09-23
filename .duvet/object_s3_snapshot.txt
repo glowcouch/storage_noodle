@@ -1,19 +1,19 @@
 SPECIFICATION: [Storage Noodle Traits](traits/spec.md)
   SECTION: [Create Trait](#create-trait)
-    TEXT[!MUST]: * In the case of a failure, the future MUST return `Err()`.
-    TEXT[!MUST]: * In the case of a success, the future MUST return `Ok(AssocId<Self, RawId>)` - where the `AssocId` holds the Id of the newly created item.
+    TEXT[!MUST,implementation]: * In the case of a failure, the future MUST return `Err()`.
+    TEXT[!MUST,implementation]: * In the case of a success, the future MUST return `Ok(AssocId<Self, RawId>)` - where the `AssocId` holds the Id of the newly created item.
 
   SECTION: [Read Trait](#read-trait)
-    TEXT[!MUST]: * In the case of a failure, the future MUST return `Err()`.
-    TEXT[!MUST]: * In the case of a partial success, where the operation succeeded, but the item doesn't exist, the future MUST return `Ok(None)`.
-    TEXT[!MUST]: * In the case of a full success, the future MUST return `Ok(Some(Self))` - where `Self` is the result of the read.
+    TEXT[!MUST,implementation]: * In the case of a failure, the future MUST return `Err()`.
+    TEXT[!MUST,implementation]: * In the case of a partial success, where the operation succeeded, but the item doesn't exist, the future MUST return `Ok(None)`.
+    TEXT[!MUST,implementation]: * In the case of a full success, the future MUST return `Ok(Some(Self))` - where `Self` is the result of the read.
 
   SECTION: [Update Trait](#update-trait)
-    TEXT[!MUST]: * In the case of a failure, the future MUST return `Err()`.
-    TEXT[!MUST]: * In the case of a partial success, where the operation succeeded, but the item doesn't exist, the future MUST return `Ok(None)`.
-    TEXT[!MUST]: * In the case of a full success, the future MUST return `Ok(Some(()))`.
+    TEXT[!MUST,implementation]: * In the case of a failure, the future MUST return `Err()`.
+    TEXT[!MUST,implementation]: * In the case of a partial success, where the operation succeeded, but the item doesn't exist, the future MUST return `Ok(None)`.
+    TEXT[!MUST,implementation]: * In the case of a full success, the future MUST return `Ok(Some(()))`.
 
   SECTION: [Delete Trait](#delete-trait)
-    TEXT[!MUST]: * In the case of a failure, the future MUST return `Err()`.
-    TEXT[!MUST]: * In the case of a partial success, where the operation succeeded, but the item doesn't exist, the future MUST return `Ok(None)`.
-    TEXT[!MUST]: * In the case of a full success, the future MUST return `Ok(Some(()))`.
+    TEXT[!MUST,implementation]: * In the case of a failure, the future MUST return `Err()`.
+    TEXT[!MUST,implementation]: * In the case of a partial success, where the operation succeeded, but the item doesn't exist, the future MUST return `Ok(None)`.
+    TEXT[!MUST,implementation]: * In the case of a full success, the future MUST return `Ok(Some(()))`.

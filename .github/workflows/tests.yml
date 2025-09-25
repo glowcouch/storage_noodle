@@ -19,9 +19,19 @@ jobs:
         uses: taiki-e/install-action@v2
         with:
           tool: cargo-nextest
+      
+      - name: download minio # required for s3 tests
+        run: |
+          mkdir minio_bin
+          cd minio_bin
+          wget https://dl.min.io/server/minio/release/linux-amd64/minio
+          chmod +x minio
 
       - name: run tests
         run: |
+          # add minio to path
+          export PATH="$PATH":"$PWD"/minio_bin
+
           cargo nextest run --profile ci --all-features
 
       - name: archive tests report

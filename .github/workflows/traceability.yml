@@ -22,11 +22,13 @@ jobs:
 
       - name: run duvet
         run: |
-          duvet report --ci
+          for file in .duvet/*_config.toml; do
+            duvet report --ci --config-path "$file"
+          done
 
       - name: archive traceability report
         uses: actions/upload-artifact@v4
         with:
-          name: traceability-report
-          path: .duvet/reports/report.html
+          name: traceability-reports
+          path: .duvet/reports
 

@@ -1,0 +1,23 @@
+# Duvet requirements traceability config for `object_s3`.
+#
+# Duvet doesn't like it when the specification is in a different directory from `.duvet`. Otherwise we would put this in the object_s3 directory.
+
+'$schema' = "https://awslabs.github.io/duvet/config/v0.4.0.json"
+
+[[source]]
+pattern = "object_s3/src/**/*.rs"
+
+[[source]]
+pattern = "object_s3_derive/src/**/*.rs"
+
+[[specification]]
+source = "traits/spec.md"
+
+[report.html]
+enabled = true
+path = ".duvet/reports/object_s3_report.html"
+
+# Enable snapshots to prevent requirement coverage regressions
+[report.snapshot]
+enabled = true
+path = ".duvet/object_s3_snapshot.txt"

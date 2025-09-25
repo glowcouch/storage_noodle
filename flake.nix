@@ -23,8 +23,13 @@
         };
       in {
         devShells.default = pkgs.mkShell {
-          nativeBuildInputs = [
+          nativeBuildInputs = with pkgs; [
             rust-toolchain
+            pkg-config
+            minio
+          ];
+          buildInputs = with pkgs; [
+            openssl
           ];
         };
         formatter = pkgs.alejandra;

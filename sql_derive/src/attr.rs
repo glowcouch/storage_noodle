@@ -20,7 +20,7 @@ pub fn for_each_attr(
         .collect()
 }
 
-/// Holds the arguments of a `config_noodle_sql` attribute.
+/// Holds the arguments of a `storage_noodle_sql` attribute.
 pub struct SqlAttr {
     /// The backing database type (typically a type implementing `sqlx::Database`).
     pub backing_db: syn::Type,
@@ -32,10 +32,10 @@ pub struct SqlAttr {
 impl SqlAttr {
     /// Try to convert from an attribute to a [`SqlAttr`].
     ///
-    /// Returns [`None`] if the error is not a `config_noodle_sql` attribute.
+    /// Returns [`None`] if the error is not a `storage_noodle_sql` attribute.
     pub fn from_attribute(attr: &syn::Attribute) -> syn::Result<Option<Self>> {
         // Check that the ident is correct.
-        if attr.path().is_ident("config_noodle_sql") {
+        if attr.path().is_ident("storage_noodle_sql") {
             // Parse the inner punctuated arguments.
             let input: syn::punctuated::Punctuated<syn::Type, syn::Token![,]> = attr
                 .parse_args_with(syn::punctuated::Punctuated::parse_terminated)
@@ -51,7 +51,7 @@ impl SqlAttr {
             } else {
                 let error = syn::Error::new_spanned(
                     attr,
-                    "must be in the format `config_noodle_sql(backing_db, raw_id)`",
+                    "must be in the format `storage_noodle_sql(backing_db, raw_id)`",
                 );
 
                 Err(error)
@@ -93,7 +93,7 @@ impl SqlAttr {
         if sql_attrs.is_empty() {
             return Err(syn::Error::new_spanned(
                 item,
-                "there is no `config_noodle_sql` attribute on this struct",
+                "there is no `storage_noodle_sql` attribute on this struct",
             )
             .to_compile_error());
         }
@@ -103,10 +103,10 @@ impl SqlAttr {
     }
 }
 
-/// Extracts a type generic from the `config_noodle_raw_id` attribute.
+/// Extracts a type generic from the `storage_noodle_raw_id` attribute.
 pub fn raw_id_attr(item: &ItemStruct) -> Option<Result<syn::Ident, syn::Error>> {
     item.attrs.iter().find_map(|attr| {
-        if attr.path().is_ident("config_noodle_raw_id") {
+        if attr.path().is_ident("storage_noodle_raw_id") {
             Some(attr.parse_args())
         } else {
             None

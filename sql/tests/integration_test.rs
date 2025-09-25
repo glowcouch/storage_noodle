@@ -94,8 +94,8 @@ async fn main() {
     storage_noodle_sql::SqlTable,
     sqlx::FromRow,
 )]
-#[config_noodle_sql(sqlx::sqlite::Sqlite, RawId)]
-#[config_noodle_raw_id(RawId)]
+#[storage_noodle_sql(sqlx::sqlite::Sqlite, RawId)]
+#[storage_noodle_raw_id(RawId)]
 struct Cookie<RawId> {
     flavour: String,
     recipe: storage_noodle_traits::AssocId<Recipe, RawId>,
@@ -111,7 +111,7 @@ struct Cookie<RawId> {
     storage_noodle_sql::SqlTable,
     sqlx::FromRow,
 )]
-#[config_noodle_sql(sqlx::sqlite::Sqlite, RawId)]
+#[storage_noodle_sql(sqlx::sqlite::Sqlite, RawId)]
 struct Recipe {
     ingredients: String,
 }

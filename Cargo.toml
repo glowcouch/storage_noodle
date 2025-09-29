@@ -34,6 +34,9 @@ itertools = "0.14.0"
 # build deps
 readme-rustdocifier = "0.1.1"
 
+# serde
+serde = "1.0.228"
+
 [workspace.lints.clippy]
 std_instead_of_core = "forbid"
 std_instead_of_alloc = "forbid"

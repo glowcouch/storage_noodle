@@ -13,6 +13,7 @@ pub trait BackingStorage {
 
 /// An Id that references a specific type.
 #[derive(Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AssocId<T: ?Sized, RawId> {
     /// The inner raw id.
     inner: RawId,

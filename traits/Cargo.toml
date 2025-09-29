@@ -4,7 +4,11 @@ rust-version = { workspace = true }
 edition = { workspace = true }
 
 [dependencies]
+# data
 sqlx = { workspace = true, optional = true }
+
+# serde
+serde = { workspace = true, optional = true, features = ["derive"] }
 
 [build-dependencies]
 readme-rustdocifier = { workspace = true }
@@ -16,5 +20,8 @@ readme-rustdocifier = { workspace = true }
 # Implements sqlx PgHasArrayType trait for `AssocId`
 "sqlx_pg_array" = ["sqlx", "sqlx/postgres"]
 
+"serde" = ["dep:serde"]
+
+# Implements serde Serialize and Deserialize traits for `AssocId`
 [lints]
 workspace = true

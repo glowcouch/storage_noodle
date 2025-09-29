@@ -31,3 +31,13 @@ where
         Ok(Self::new(RawId::decode(value)?))
     }
 }
+
+#[cfg(feature = "sqlx_pg_array")]
+impl<T, RawId> sqlx::postgres::PgHasArrayType for crate::AssocId<T, RawId>
+where
+    RawId: sqlx::postgres::PgHasArrayType,
+{
+    fn array_type_info() -> sqlx::postgres::PgTypeInfo {
+        RawId::array_type_info()
+    }
+}

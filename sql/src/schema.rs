@@ -1,6 +1,10 @@
-#[cfg(feature = "sqlite_schema")]
 /// Sqlite schema generator.
+#[cfg(feature = "sqlite_schema")]
 pub mod sqlite;
+
+/// Postgres schema generator.
+#[cfg(feature = "postgres_schema")]
+pub mod postgres;
 
 /// Represents an SQL table.
 #[derive(Debug)]

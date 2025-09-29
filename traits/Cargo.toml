@@ -13,5 +13,8 @@ readme-rustdocifier = { workspace = true }
 # Implements sqlx traits for `AssocId`
 "sqlx" = ["dep:sqlx"]
 
+# Implements sqlx PgHasArrayType trait for `AssocId`
+"sqlx_pg_array" = ["sqlx", "sqlx/postgres"]
+
 [lints]
 workspace = true

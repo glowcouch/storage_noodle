@@ -12,7 +12,7 @@ pub trait BackingStorage {
 }
 
 /// An Id that references a specific type.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AssocId<T: ?Sized, RawId> {
     /// The inner raw id.
@@ -20,6 +20,15 @@ pub struct AssocId<T: ?Sized, RawId> {
 
     /// Phantom data.
     phantom: PhantomData<T>,
+}
+
+impl<T: ?Sized, RawId: Clone> Clone for AssocId<T, RawId> {
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+            phantom: PhantomData,
+        }
+    }
 }
 
 impl<T: ?Sized, RawId> AssocId<T, RawId> {

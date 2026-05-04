@@ -80,9 +80,8 @@ fn create_impl(item: &syn::ItemStruct, backing_db: &syn::Type, raw_id: &syn::Typ
             fn create<'a>(
                 &'a self,
                 storage: impl ::core::ops::Deref<Target = ::storage_noodle_sql::SqlBacking<#backing_db, #raw_id>>
-                + ::core::marker::Send
                 + 'a,
-            ) -> impl ::core::future::Future<Output = ::core::result::Result<::storage_noodle_sql::macro_helpers::AssocId<Self, #raw_id>, Self::Error>> + ::core::marker::Send {
+            ) -> impl ::core::future::Future<Output = ::core::result::Result<::storage_noodle_sql::macro_helpers::AssocId<Self, #raw_id>, Self::Error>>  {
                 async move {
                     // Build the query.
                     let query = ::sqlx::query_scalar(#query)#bind_calls;
@@ -143,10 +142,9 @@ fn read_impl(item: &syn::ItemStruct, backing_db: &syn::Type, raw_id: &syn::Type)
             type Error = ::sqlx::Error;
 
             fn read(
-                storage: impl ::core::ops::Deref<Target = ::storage_noodle_sql::SqlBacking<#backing_db, #raw_id>>
-                + ::core::marker::Send,
-                id: impl ::core::ops::Deref<Target = ::storage_noodle_sql::macro_helpers::AssocId<Self, #raw_id>> + ::core::marker::Send
-            ) -> impl ::core::future::Future<Output = ::core::result::Result<core::option::Option<Self>, Self::Error>> + ::core::marker::Send {
+                storage: impl ::core::ops::Deref<Target = ::storage_noodle_sql::SqlBacking<#backing_db, #raw_id>>,
+                id: impl ::core::ops::Deref<Target = ::storage_noodle_sql::macro_helpers::AssocId<Self, #raw_id>>
+            ) -> impl ::core::future::Future<Output = ::core::result::Result<core::option::Option<Self>, Self::Error>>  {
                 async move {
                     // Build the query.
                     let query = ::sqlx::query_as(#query).bind(id.as_raw());
@@ -227,10 +225,9 @@ fn update_impl(item: &syn::ItemStruct, backing_db: &syn::Type, raw_id: &syn::Typ
             fn update<'a>(
                 &'a self,
                 storage: impl ::core::ops::Deref<Target = ::storage_noodle_sql::SqlBacking<#backing_db, #raw_id>>
-                + ::core::marker::Send
                 + 'a,
-                id: impl ::core::ops::Deref<Target = ::storage_noodle_sql::macro_helpers::AssocId<Self, #raw_id>> + ::core::marker::Send
-            ) -> impl ::core::future::Future<Output = ::core::result::Result<::core::option::Option<()>, Self::Error>> + ::core::marker::Send {
+                id: impl ::core::ops::Deref<Target = ::storage_noodle_sql::macro_helpers::AssocId<Self, #raw_id>>
+            ) -> impl ::core::future::Future<Output = ::core::result::Result<::core::option::Option<()>, Self::Error>>  {
                 async move {
                     // Build the query.
                     let query = ::sqlx::query(#query)#bind_calls.bind(id.as_raw());
@@ -291,10 +288,9 @@ fn delete_impl(item: &syn::ItemStruct, backing_db: &syn::Type, raw_id: &syn::Typ
             type Error = ::sqlx::Error;
 
             fn delete(
-                storage: impl ::core::ops::Deref<Target = ::storage_noodle_sql::SqlBacking<#backing_db, #raw_id>>
-                + ::core::marker::Send,
-                id: impl ::core::ops::Deref<Target = ::storage_noodle_sql::macro_helpers::AssocId<Self, #raw_id>> + ::core::marker::Send
-            ) -> impl Future<Output = ::core::result::Result<::core::option::Option<()>, Self::Error>> + ::core::marker::Send {
+                storage: impl ::core::ops::Deref<Target = ::storage_noodle_sql::SqlBacking<#backing_db, #raw_id>>,
+                id: impl ::core::ops::Deref<Target = ::storage_noodle_sql::macro_helpers::AssocId<Self, #raw_id>>
+            ) -> impl Future<Output = ::core::result::Result<::core::option::Option<()>, Self::Error>>  {
                 async move {
                     // Build & execute the query.
                     let result = ::sqlx::query(#query).bind(id.as_raw()).execute(&storage.pool).await;

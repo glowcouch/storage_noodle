@@ -54,8 +54,8 @@ pub trait Create<S: BackingStorage> {
     /// Creates a new item in the storage backend. Returns the Id of the new item.
     fn create<'a>(
         &'a self,
-        storage: impl Deref<Target = S> + 'a + Send,
-    ) -> impl Future<Output = Result<AssocId<Self, S::RawId>, Self::Error>> + Send;
+        storage: impl Deref<Target = S> + 'a,
+    ) -> impl Future<Output = Result<AssocId<Self, S::RawId>, Self::Error>>;
 }
 
 /// Trait that abstracts over reading data from a storage backend.
@@ -65,9 +65,9 @@ pub trait Read<S: BackingStorage>: Sized {
 
     /// Reads an item from the storage backend. Returns the item.
     fn read(
-        storage: impl Deref<Target = S> + Send,
-        id: impl Deref<Target = AssocId<Self, S::RawId>> + Send,
-    ) -> impl Future<Output = Result<Option<Self>, Self::Error>> + Send;
+        storage: impl Deref<Target = S>,
+        id: impl Deref<Target = AssocId<Self, S::RawId>>,
+    ) -> impl Future<Output = Result<Option<Self>, Self::Error>>;
 }
 
 /// Trait that abstracts over updating data in a storage backend.
@@ -78,9 +78,9 @@ pub trait Update<S: BackingStorage> {
     /// Updates an item in the storage backend. Will return [`None`] if the item doesn't exist.
     fn update<'a>(
         &'a self,
-        storage: impl Deref<Target = S> + 'a + Send,
-        id: impl Deref<Target = AssocId<Self, S::RawId>> + Send,
-    ) -> impl Future<Output = Result<Option<()>, Self::Error>> + Send;
+        storage: impl Deref<Target = S> + 'a,
+        id: impl Deref<Target = AssocId<Self, S::RawId>>,
+    ) -> impl Future<Output = Result<Option<()>, Self::Error>>;
 }
 
 /// Trait that abstracts over deleting data from a storage backend.
@@ -90,7 +90,7 @@ pub trait Delete<S: BackingStorage>: Sized {
 
     /// Deletes an item from the storage backend. Will return [`None`] if the item doesn't exist.
     fn delete(
-        storage: impl Deref<Target = S> + Send,
-        id: impl Deref<Target = AssocId<Self, S::RawId>> + Send,
-    ) -> impl Future<Output = Result<Option<()>, Self::Error>> + Send;
+        storage: impl Deref<Target = S>,
+        id: impl Deref<Target = AssocId<Self, S::RawId>>,
+    ) -> impl Future<Output = Result<Option<()>, Self::Error>>;
 }

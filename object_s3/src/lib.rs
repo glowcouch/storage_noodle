@@ -34,7 +34,7 @@ impl Create<S3Backing> for Object {
 
     async fn create<'a>(
         &'a self,
-        storage: impl core::ops::Deref<Target = S3Backing> + 'a + Send,
+        storage: impl core::ops::Deref<Target = S3Backing> + 'a,
     ) -> Result<
         storage_noodle_traits::AssocId<
             Self,
@@ -64,13 +64,13 @@ impl Read<S3Backing> for Object {
     type Error = minio::s3::error::Error;
 
     async fn read(
-        storage: impl core::ops::Deref<Target = S3Backing> + Send,
+        storage: impl core::ops::Deref<Target = S3Backing>,
         id: impl core::ops::Deref<
             Target = storage_noodle_traits::AssocId<
                 Self,
                 <S3Backing as storage_noodle_traits::BackingStorage>::RawId,
             >,
-        > + Send,
+        >,
     ) -> Result<Option<Self>, Self::Error> {
         // Get data.
         let result = storage
@@ -112,13 +112,13 @@ impl Update<S3Backing> for Object {
 
     async fn update<'a>(
         &'a self,
-        storage: impl core::ops::Deref<Target = S3Backing> + 'a + Send,
+        storage: impl core::ops::Deref<Target = S3Backing> + 'a,
         id: impl core::ops::Deref<
             Target = storage_noodle_traits::AssocId<
                 Self,
                 <S3Backing as storage_noodle_traits::BackingStorage>::RawId,
             >,
-        > + Send,
+        >,
     ) -> Result<Option<()>, Self::Error> {
         // Check that the object does exist
         if let Err(e) = storage
@@ -161,13 +161,13 @@ impl Delete<S3Backing> for Object {
     type Error = minio::s3::error::Error;
 
     async fn delete(
-        storage: impl core::ops::Deref<Target = S3Backing> + Send,
+        storage: impl core::ops::Deref<Target = S3Backing>,
         id: impl core::ops::Deref<
             Target = storage_noodle_traits::AssocId<
                 Self,
                 <S3Backing as storage_noodle_traits::BackingStorage>::RawId,
             >,
-        > + Send,
+        >,
     ) -> Result<Option<()>, Self::Error> {
         // Delete the object.
         let result = storage

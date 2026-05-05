@@ -26,8 +26,9 @@ The Read trait is used to read an item from the backing storage. The `Read::read
 The Update trait is used to update an item in the backing storage. The `Update::update` async function has these return values:
 
 * In the case of a failure, the future MUST return `Err()`.
-* In the case of a partial success, where the operation succeeded, but the item doesn't exist, the future MUST return `Ok(None)`.
-* In the case of a full success, the future MUST return `Ok(Some(()))`.
+* In the case of a success, the future MUST return `Ok(())`.
+
+If the item already exists, it MUST be overwritten.
 
 ### Delete Trait
 

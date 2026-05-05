@@ -119,28 +119,12 @@ impl Update<S3Backing> for Object {
                 <S3Backing as storage_noodle_traits::BackingStorage>::RawId,
             >,
         >,
-    ) -> Result<Option<()>, Self::Error> {
-        // Check that the object does exist
-        if let Err(e) = storage
-            .client
-            .get_object(&storage.bucket, id.deref().as_raw())
-            .send()
-            .await
-            && let minio::s3::error::Error::S3Error(s3e) = &e
-        {
-            if let minio::s3::error::ErrorCode::NoSuchKey = s3e.code {
-                //= traits/spec.md#update-trait
-                //# * In the case of a partial success, where the operation succeeded, but the item doesn't exist, the future MUST return `Ok(None)`.
-                return Ok(None);
-            }
-            //= traits/spec.md#update-trait
-            //# * In the case of a failure, the future MUST return `Err()`.
-            return Err(e);
-        }
-
+    ) -> Result<(), Self::Error> {
         // Upload data.
         let result = storage
             .client
+            //= traits/spec.md#update-trait
+            //# * If the item already exists, it MUST be overwritten.
             .put_object(
                 &storage.bucket,
                 id.deref().as_raw(),
@@ -152,8 +136,8 @@ impl Update<S3Backing> for Object {
         //= traits/spec.md#update-trait
         //# * In the case of a failure, the future MUST return `Err()`.
         //= traits/spec.md#update-trait
-        //# * In the case of a full success, the future MUST return `Ok(Some(()))`.
-        result.map(|_| Some(()))
+        //# * In the case of a success, the future MUST return `Ok(())`.
+        result.map(|_| ())
     }
 }
 

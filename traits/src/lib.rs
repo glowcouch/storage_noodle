@@ -75,12 +75,12 @@ pub trait Update<S: BackingStorage> {
     /// The error type that can be returned from [`Update::update`].
     type Error;
 
-    /// Updates an item in the storage backend. Will return [`None`] if the item doesn't exist.
+    /// Updates an item in the storage backend. Will create the item if the item doesn't exist.
     fn update<'a>(
         &'a self,
         storage: impl Deref<Target = S> + 'a,
         id: impl Deref<Target = AssocId<Self, S::RawId>>,
-    ) -> impl Future<Output = Result<Option<()>, Self::Error>>;
+    ) -> impl Future<Output = Result<(), Self::Error>>;
 }
 
 /// Trait that abstracts over deleting data from a storage backend.

@@ -190,20 +190,34 @@ fn update_impl(item: &syn::ItemStruct, backing_db: &syn::Type, raw_id: &syn::Typ
 
     // The SQL query to run.
     let query = {
+        //= traits/spec.md#update-trait
+        //# * If the item already exists, it MUST be overwritten.
         let query = format!(
+            // Basically upsert, include the id in the fields.
             "
-                UPDATE {}
-                SET {}
-                WHERE {};
+                INSERT INTO {} ({})
+                VALUES ({})
+                ON CONFLICT DO UPDATE
             ",
             table,
             columns
                 .iter()
-                .enumerate()
-                .map(|(i, column)| { format!("{}=${}", column.name, i + 1) })
+                .map(|c| &*c.name)
+                // include the id
+                .chain(core::iter::once(crate::sql::ID_FIELD_NAME))
                 .collect::<Vec<_>>()
-                .join(", "),
-            crate::sql::ID_FIELD_NAME,
+                .join(", "), // List of column names (in order).
+            {
+                #[allow(
+                    clippy::range_plus_one,
+                    reason = "adding one here because of the id key"
+                )]
+                // include the id
+                (0..(columns.len() + 1))
+                    .map(|i| format!("${}", i + 1))
+                    .collect::<Vec<_>>()
+                    .join(", ") // List of "$1" - to be filled in with bind calls.
+            }
         );
         syn::LitStr::new(&query, proc_macro2::Span::mixed_site())
     };
@@ -228,9 +242,10 @@ fn update_impl(item: &syn::ItemStruct, backing_db: &syn::Type, raw_id: &syn::Typ
                 storage: impl ::core::ops::Deref<Target = ::storage_noodle_sql::SqlBacking<#backing_db, #raw_id>>
                 + 'a,
                 id: impl ::core::ops::Deref<Target = ::storage_noodle_sql::macro_helpers::AssocId<Self, #raw_id>>
-            ) -> impl ::core::future::Future<Output = ::core::result::Result<::core::option::Option<()>, Self::Error>>  {
+            ) -> impl ::core::future::Future<Output = ::core::result::Result<(), Self::Error>>  {
                 async move {
                     // Build the query.
+                    // Bind the id last, as this is where it was placed in the query.
                     let query = ::sqlx::query(#query)#bind_calls.bind(id.as_raw());
 
                     // Execute the query.
@@ -238,12 +253,8 @@ fn update_impl(item: &syn::ItemStruct, backing_db: &syn::Type, raw_id: &syn::Typ
 
                     match result {
                         //= traits/spec.md#update-trait
-                        //# * In the case of a full success, the future MUST return `Ok(Some(()))`.
-                        Ok(_) => Ok(Some(())),
-
-                        //= traits/spec.md#update-trait
-                        //# * In the case of a partial success, where the operation succeeded, but the item doesn't exist, the future MUST return `Ok(None)`.
-                        Err(::sqlx::Error::RowNotFound) => Ok(None),
+                        //# * In the case of a success, the future MUST return `Ok(())`.
+                        Ok(_) => Ok(()),
 
                         //= traits/spec.md#update-trait
                         //# * In the case of a failure, the future MUST return `Err()`.

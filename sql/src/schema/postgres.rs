@@ -17,7 +17,9 @@ fn generate_row(sql_column: &super::SqlColumn) -> String {
 
     match column_type {
         super::ColumnType::Data => format!("{name} {ty}"),
-        super::ColumnType::PrimaryKey => format!("{name} {ty} PRIMARY KEY"),
+        super::ColumnType::PrimaryKey => {
+            format!("{name} {ty} GENERATED ALWAYS AS IDENTITY PRIMARY KEY")
+        }
     }
 }
 

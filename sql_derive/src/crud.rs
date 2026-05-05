@@ -54,9 +54,9 @@ fn create_impl(item: &syn::ItemStruct, backing_db: &syn::Type, raw_id: &syn::Typ
                 .collect::<Vec<_>>()
                 .join(", "), // List of column names (in order).
             (0..columns.len())
-                .map(|_| "?")
+                .map(|i| format!("${}", i + 1))
                 .collect::<Vec<_>>()
-                .join(", "), // List of "?" - to be filled in with bind calls.
+                .join(", "), // List of "$1" - to be filled in with bind calls.
             crate::sql::ID_FIELD_NAME,
         );
         syn::LitStr::new(&query, proc_macro2::Span::mixed_site())
@@ -122,7 +122,7 @@ fn read_impl(item: &syn::ItemStruct, backing_db: &syn::Type, raw_id: &syn::Type)
         let query = format!(
             "
                 SELECT {} FROM {}
-                WHERE {}=?;
+                WHERE {}=$1;
             ",
             columns
                 .iter()
@@ -194,12 +194,13 @@ fn update_impl(item: &syn::ItemStruct, backing_db: &syn::Type, raw_id: &syn::Typ
             "
                 UPDATE {}
                 SET {}
-                WHERE {}=?;
+                WHERE {};
             ",
             table,
             columns
                 .iter()
-                .map(|column| { format!("{}=?", column.name) })
+                .enumerate()
+                .map(|(i, column)| { format!("{}=${}", column.name, i + 1) })
                 .collect::<Vec<_>>()
                 .join(", "),
             crate::sql::ID_FIELD_NAME,
@@ -273,7 +274,7 @@ fn delete_impl(item: &syn::ItemStruct, backing_db: &syn::Type, raw_id: &syn::Typ
         let query = format!(
             "
                 DELETE FROM {}
-                WHERE {}=?;
+                WHERE {}=$1;
             ",
             table,
             crate::sql::ID_FIELD_NAME,

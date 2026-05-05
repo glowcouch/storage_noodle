@@ -38,11 +38,12 @@ readme-rustdocifier = "0.1.1"
 serde = "1.0.228"
 
 [workspace.lints.clippy]
-std_instead_of_core = "forbid"
-std_instead_of_alloc = "forbid"
-alloc_instead_of_core = "forbid"
-missing_docs_in_private_items = "forbid"
-pedantic = "forbid"
+std_instead_of_core = "deny"
+std_instead_of_alloc = "deny"
+alloc_instead_of_core = "deny"
+missing_docs_in_private_items = "deny"
+pedantic = { level = "deny", priority = -1 }
+allow_without_reason = "forbid"
 
 [workspace.lints.rust]
-missing_docs = "forbid"
+missing_docs = "deny"
